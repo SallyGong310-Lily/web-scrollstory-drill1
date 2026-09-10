@@ -14,6 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     heroVideo.muted = true;
     heroVideo.playsInline = true;
+    heroVideo.loop = true;
+    heroVideo.setAttribute('loop', 'loop');
 
     const playPromise = heroVideo.play();
     if (playPromise && typeof playPromise.catch === 'function') {
@@ -26,6 +28,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   };
+
+  if (heroVideo) {
+    heroVideo.loop = true;
+    heroVideo.addEventListener('ended', () => {
+      heroVideo.currentTime = 0;
+      heroVideo.play().catch(() => {});
+    });
+  }
 
   // 2. 滚动事件监听：控制视差淡出与导航栏显示
   window.addEventListener('scroll', () => {
