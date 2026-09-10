@@ -284,6 +284,8 @@ figcaption {
   }
 
   .reading-width p {
+    position: relative;
+    z-index: 2;
     font-size: 1.04rem;
     line-height: 1.85;
     margin: 0 0 1rem;
@@ -292,13 +294,19 @@ figcaption {
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
     border-radius: 10px;
     backdrop-filter: blur(2px);
-    transform: translateY(-6px);
+    transform: translateY(-12px);
   }
 
   .inline-media {
-    margin: 2.25rem 0 0.8rem;
     position: relative;
     z-index: 1;
+    margin: 2.25rem 0 0;
+  }
+
+  .inline-media + .reading-width p,
+  .inline-media + p,
+  .inline-media + .intro-text {
+    margin-top: -0.5rem;
   }
 
   .inline-media img {
