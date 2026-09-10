@@ -258,6 +258,48 @@ figcaption {
 
 /* 响应式微调 */
 @media (max-width: 768px) {
-  .pull-quote { margin: 2rem 0; }
-  .parallax-window { background-attachment: scroll; /* 移动端因性能原因通常禁用 fixed，退化为普通随动大图 */ }
+  .cover {
+    height: 78vh;
+    min-height: 520px;
+  }
+
+  .cover-media video {
+    object-position: center center;
+  }
+
+  .subtitle {
+    font-size: clamp(1rem, 5vw, 1.5rem);
+  }
+
+  .reading-width {
+    width: 92%;
+  }
+
+  .reading-width p {
+    font-size: 1.04rem;
+    line-height: 1.85;
+    margin-bottom: 1rem;
+    padding: 0.55rem 0.7rem;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+    backdrop-filter: blur(2px);
+  }
+
+  .inline-media {
+    margin: 2.25rem 0 -0.8rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .pull-quote {
+    margin: 2rem 0;
+    font-size: 1.28rem;
+  }
+
+  .parallax-window {
+    min-height: 52vh;
+    height: 52vh;
+    background-attachment: scroll; /* 移动端因性能原因通常禁用 fixed，退化为普通随动大图 */
+    background-position: center center;
+  }
 }
