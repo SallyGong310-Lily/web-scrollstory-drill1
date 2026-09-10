@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寂静岭的十二小时 - 深度特稿</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 顶部幽灵导航（初始隐藏，滑过封面后显示） -->
+  <nav class="ghost-nav" id="ghostNav">
+    <div class="nav-title">白幕：寂静岭的十二小时</div>
+    <ul class="nav-chapters">
+      <li><a href="#chapter-1">1. 进山</a></li>
+      <li><a href="#chapter-2">2. 风暴眼</a></li>
+    </ul>
+  </nav>
+
+  <!-- 开场：全屏多媒体封面 -->
+  <header class="hero" id="hero">
+    <div class="hero-media">
+      <!-- 循环无声背景视频，带占位海报 -->
+      <video autoplay muted loop playsinline preload="auto" poster="assets/cover-poster.jpg">
+        <source src="assets/cover-snow-loop.webm" type="video/webm">
+      </video>
+      <div class="hero-overlay"></div>
+    </div>
+    
+    <div class="hero-text" id="heroText">
+      <h1>雪崩</h1>
+      <p class="subtitle">寂静岭的十二小时，以及那些未能下山的人。</p>
+      <div class="byline">撰文 / Sally</div>
+    </div>
+  </header>
+
+  <!-- 正文区域 -->
+  <main class="article-content">
+    
+    <!-- 第一章 -->
+    <section id="chapter-1">
+      <div class="reading-width">
+        <p class="drop-cap">气</p>
+        <p class="intro-text">
+          象台发出暴雪红色预警时，第七科考队已经越过了寂静岭的雪线。在这个海拔，空气稀薄得像被抽干了水分的海绵，每一次呼吸都带着血腥味。
+        </p>
+        <p>
+          队长李维拉紧了冲锋衣的领口。他曾在世界各地的极寒地带执行过任务，但寂静岭的风不同。这里的风不呼啸，而是发出一种低沉的、类似重型机械运转的嗡鸣。下午两点，天色已经暗得像黄昏。
+        </p>
+
+        <!-- 突破窄栏的行内图片（居中，带优美的图注） -->
+        <figure class="inline-media">
+          <img src="assets/inline-portrait.jpg" alt="队长李维的档案肖像">
+          <figcaption>队长李维在出发前的留影。他曾说：“雪山从不杀人，是傲慢在杀人。”</figcaption>
+        </figure>
+
+        <p>
+          根据卫星回传的数据，冷锋将在三小时后彻底吞噬他们所在的 4 号营地。撤退路线只有一条，那就是穿过被称为“鬼见愁”的狭窄冰塔林。但温度下降的速度超出了所有气象模型的预测，电子设备开始接连失效，GPS 屏幕上的光斑闪烁了两下，彻底熄灭。
+        </p>
+      </div>
+    </section>
+
+    <!-- 视差多媒体窗口（地图切场） -->
+    <section class="parallax-window" style="background-image: url('assets/parallax-map.avif');">
+      <div class="parallax-caption">
+        寂静岭等高线拓扑图。红点标记为第七科考队最后发出信号的位置。
+      </div>
+    </section>
+
+    <!-- 第二章 -->
+    <section id="chapter-2">
+      <div class="reading-width">
+        <h2>风暴眼中的寂静</h2>
+        <p>
+          晚八点，风暴达到了顶峰。如果此时有人能从万米高空俯瞰，会看到整个寂静岭被一个巨大的白色旋涡包裹。但在风暴的最中心，反而出现了一种诡异的平静。
+        </p>
+        <p>
+          雪花不再是横向飞舞，而是像铅块一样垂直砸下。营地帐篷的支撑杆在积雪的重压下发出痛苦的呻吟。无线电里只剩下沙沙的静电噪音，像是有无数人在用气声低语。
+        </p>
+        
+        <!-- 引用语块 -->
+        <blockquote class="pull-quote">
+          “那一刻，我感觉不是我们在攀登雪山，而是雪山在缓慢地咀嚼我们。”
+        </blockquote>
+
+        <p>
+          李维知道，他们不能再等下去了。留在帐篷里是慢性死亡，冲出去也许还有一线生机。他点燃了最后一根防风火柴，微弱的橘色火光在五个队员绝望的瞳孔里跳跃。
+        </p>
+      </div>
+    </section>
+
+    <!-- 视差多媒体窗口（背影切场） -->
+    <section class="parallax-window" style="background-image: url('assets/parallax-climber.avif');">
+      <!-- 纯视觉切场，不带图注 -->
+    </section>
+
+    <section class="ending-section">
+      <div class="reading-width">
+        <p>
+          此后的十二小时，成为了现代登山史上的一个谜。搜救队在三天后抵达 4 号营地时，只找到了半埋在雪中的空帐篷，以及一本被冻成冰块的航海日志。
+        </p>
+        <p>最后一页上，只有潦草的一句话：“雪太白了，白得让人想睡去。”</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>版权所有 © 虚拟新闻周刊。排版致敬 The New York Times 《Snow Fall》。</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

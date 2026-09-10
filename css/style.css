@@ -1,0 +1,263 @@
+/* 基础重置 */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth; /* 锚点平滑滚动 */
+}
+
+/* 核心字体设定：致敬纽约时报的优雅衬线体搭配无衬线界面字体 */
+body {
+  font-family: "Georgia", "Times New Roman", "Songti SC", "Noto Serif CJK SC", serif;
+  color: #333;
+  background-color: #fcfcfc;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================================
+   1. 幽灵导航 (Ghost Nav)
+   ================================ */
+.ghost-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  z-index: 1000;
+  
+  /* 初始隐藏，由 JS 控制显形 */
+  transform: translateY(-100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+}
+
+.ghost-nav.is-visible {
+  transform: translateY(0);
+}
+
+.nav-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #000;
+}
+
+.nav-chapters {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-chapters a {
+  text-decoration: none;
+  color: #666;
+  font-size: 0.85rem;
+  transition: color 0.2s;
+}
+
+.nav-chapters a:hover {
+  color: #000;
+}
+
+/* ================================
+   2. 开场电影海报 (Hero Section)
+   ================================ */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.hero-media {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8; /* 降低一点亮度让白字显眼 */
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+}
+
+.hero-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #fff;
+  width: 90%;
+  max-width: 800px;
+  /* 供 JS 滑动淡出使用 */
+  transition: opacity 0.1s, transform 0.1s; 
+}
+
+.hero-text h1 {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 300;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.byline {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #ccc;
+}
+
+/* ================================
+   3. 核心窄栏阅读区 (Reading Column)
+   ================================ */
+.article-content {
+  position: relative;
+  background-color: #fcfcfc;
+  z-index: 2;
+}
+
+section {
+  padding: 5rem 0;
+}
+
+/* 将阅读宽度严格限制在最适宜阅读的 600-650px */
+.reading-width {
+  width: 90%;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.reading-width p {
+  font-size: 1.15rem; /* 大号正文字体 */
+  margin-bottom: 1.8rem;
+  color: #222;
+  text-align: justify;
+}
+
+.reading-width h2 {
+  font-family: -apple-system, sans-serif;
+  font-size: 2rem;
+  margin: 3rem 0 1.5rem;
+  color: #111;
+}
+
+/* 首字下沉效果 */
+.drop-cap {
+  float: left;
+  font-size: 5rem;
+  line-height: 0.8;
+  padding-top: 0.2rem;
+  padding-right: 0.5rem;
+  color: #000;
+}
+
+/* ================================
+   4. 行内媒体与引言 (Inline Media)
+   ================================ */
+.inline-media {
+  margin: 3rem 0;
+  width: 100%;
+}
+
+.inline-media img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+figcaption {
+  font-family: -apple-system, sans-serif;
+  font-size: 0.85rem;
+  color: #777;
+  text-align: right;
+  margin-top: 0.8rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.pull-quote {
+  font-size: 1.6rem;
+  font-style: italic;
+  color: #555;
+  margin: 3rem -2rem; /* 在大屏幕上突破文本边界 */
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ================================
+   5. 视差滚动切场 (Parallax Window)
+   ================================ */
+/* 
+  Snow Fall 最惊艳的魔法：利用 background-attachment: fixed
+  让图片钉在浏览器背面，网页内容像开了窗户一样透过去看。
+*/
+.parallax-window {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  background-attachment: fixed; /* 视差核心 */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  align-items: flex-end; /* 让图注沉到底部 */
+  padding: 0; /* 覆盖 section 默认的 padding */
+}
+
+.parallax-caption {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 1rem 5%;
+  font-family: -apple-system, sans-serif;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+/* ================================
+   6. 结尾
+   ================================ */
+.site-footer {
+  background-color: #111;
+  color: #888;
+  text-align: center;
+  padding: 3rem 1rem;
+  font-family: -apple-system, sans-serif;
+  font-size: 0.85rem;
+}
+
+/* 响应式微调 */
+@media (max-width: 768px) {
+  .pull-quote { margin: 2rem 0; }
+  .parallax-window { background-attachment: scroll; /* 移动端因性能原因通常禁用 fixed，退化为普通随动大图 */ }
+}
