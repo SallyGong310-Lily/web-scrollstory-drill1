@@ -259,12 +259,18 @@ figcaption {
 /* 响应式微调 */
 @media (max-width: 768px) {
   .cover {
-    height: 78vh;
-    min-height: 520px;
+    height: 74vh;
+    min-height: 500px;
+  }
+
+  .cover-text {
+    top: 58%;
+    width: 88%;
   }
 
   .cover-media video {
     object-position: center center;
+    filter: brightness(0.82) saturate(0.95);
   }
 
   .subtitle {
@@ -273,33 +279,65 @@ figcaption {
 
   .reading-width {
     width: 92%;
+    position: relative;
+    z-index: 2;
   }
 
   .reading-width p {
     font-size: 1.04rem;
     line-height: 1.85;
-    margin-bottom: 1rem;
-    padding: 0.55rem 0.7rem;
-    background: rgba(255, 255, 255, 0.76);
+    margin: 0 0 1rem;
+    padding: 0.7rem 0.8rem;
+    background: rgba(255, 255, 255, 0.78);
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+    border-radius: 10px;
     backdrop-filter: blur(2px);
+    transform: translateY(-6px);
   }
 
   .inline-media {
-    margin: 2.25rem 0 -0.8rem;
+    margin: 2.25rem 0 0.8rem;
     position: relative;
     z-index: 1;
+  }
+
+  .inline-media img {
+    border-radius: 12px;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    background: rgba(255, 255, 255, 0.72);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
   }
 
   .pull-quote {
     margin: 2rem 0;
     font-size: 1.28rem;
+    padding: 0 0.25rem;
   }
 
   .parallax-window {
     min-height: 52vh;
     height: 52vh;
-    background-attachment: scroll; /* 移动端因性能原因通常禁用 fixed，退化为普通随动大图 */
+    position: relative;
+    overflow: hidden;
+    background-attachment: scroll;
     background-position: center center;
+  }
+
+  .parallax-window::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 15, 20, 0.22), rgba(10, 15, 20, 0));
+  }
+
+  .parallax-caption {
+    position: relative;
+    z-index: 1;
+    background: rgba(15, 23, 42, 0.55);
   }
 }
