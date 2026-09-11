@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const coverVideo = document.querySelector('.cover-media video');
   
   // 获取封面的实际高度
-  const coverHeight = coverSection.offsetHeight;
+  let coverHeight = coverSection.offsetHeight;
 
   const tryPlayVideo = () => {
     if (!coverVideo) return;
@@ -37,28 +37,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 2. 滚动事件监听：控制视差淡出与导航栏显示
+  window.addEventListener('resize', () => {
+    coverHeight = coverSection.offsetHeight;
+  }, { passive: true });
+
+  // 2. 滚动事件监听：用 rAF 将视觉更新同步到浏览器渲染帧
+  let isTicking = false;
+
   window.addEventListener('scroll', () => {
-    const scrollY = window.scrollY || window.pageYOffset;
+    if (isTicking) return;
 
-    // A. 封面文字的缓动视差与淡出效果
-    // 当向下滚动时，文字上移的速度比页面滚动慢（产生滞后漂浮感），同时透明度降低
-    if (scrollY < coverHeight) {
-      const fadeOutOpacity = 1 - (scrollY / (coverHeight * 0.6)); // 滚到 60% 处彻底透明
-      const parallaxY = scrollY * 0.4; // 视差位移量
-      
-      coverText.style.opacity = Math.max(0, fadeOutOpacity);
-      coverText.style.transform = `translate(-50%, calc(-50% + ${parallaxY}px))`;
-    }
+    isTicking = true;
+    window.requestAnimationFrame(() => {
+      const scrollY = window.scrollY || window.pageYOffset;
 
-    // B. 幽灵导航栏的显隐
-    // 当滚动超过封面高度的 80% 时，顶部导航栏滑入
-    if (scrollY > coverHeight * 0.8) {
-      ghostNav.classList.add('is-visible');
-    } else {
-      ghostNav.classList.remove('is-visible');
-    }
-  });
+      if (scrollY < coverHeight) {
+        const fadeOutOpacity = 1 - (scrollY / (coverHeight * 0.6));
+        const parallaxY = scrollY * 0.4;
+
+        coverText.style.opacity = Math.max(0, fadeOutOpacity).toFixed(3);
+        coverText.style.transform = `translate(-50%, calc(-50% + ${parallaxY}px))`;
+      }
+
+      if (scrollY > coverHeight * 0.8) {
+        ghostNav.classList.add('is-visible');
+      } else {
+        ghostNav.classList.remove('is-visible');
+      }
+
+      isTicking = false;
+    });
+  }, { passive: true });
 
   // 3. 性能优化：自动暂停不在视口内的视频
   // 当开场视频滚出屏幕外时暂停播放，节省 CPU 资源
