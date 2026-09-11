@@ -35,7 +35,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 2rem;
+  padding-bottom: 0;
   z-index: 1000;
   
   /* 初始隐藏，由 JS 控制显形 */
@@ -332,10 +332,26 @@ figcaption {
     margin: 2.25rem 0 0;
   }
 
-  .inline-media + .reading-width p,
-  .inline-media + p,
-  .inline-media + .intro-text {
-    margin-top: -0.5rem;
+  /* 图片后的正文块压回图片底部，保持桌面端的叙事层次 */
+  .inline-media + p {
+    position: relative;
+    z-index: 2;
+    margin-top: -2.5rem;
+  }
+
+  /* 两个全宽切场后，下一段正文以白色阅读块覆盖图片底部 */
+  .parallax-window + section {
+    position: relative;
+    z-index: 2;
+    margin-top: -4.5rem;
+    padding-top: 0;
+  }
+
+  .parallax-window + section .reading-width {
+    padding: 1.25rem 0.8rem 0;
+    background: rgba(252, 252, 252, 0.94);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.12);
   }
 
   .inline-media img {
