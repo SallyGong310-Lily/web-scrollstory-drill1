@@ -1,5 +1,9 @@
-/* 基础重置 */
-*, *::before, *::after {
+/* ================================
+   基础重置
+   ================================ */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -11,9 +15,10 @@ html {
 
 /* 核心字体设定：致敬纽约时报的优雅衬线体搭配无衬线界面字体 */
 body {
-  font-family: "Georgia", "Times New Roman", "Songti SC", "Noto Serif CJK SC", serif;
+  font-family:
+    "Georgia", "Times New Roman", "Songti SC", "Noto Serif CJK SC", serif;
   color: #333;
-  background-color: #fcfcfc;
+  background-color: #0b0f16; /* 封面与页脚的过卷底色 */
   line-height: 1.8;
   -webkit-font-smoothing: antialiased;
 }
@@ -37,7 +42,7 @@ body {
   align-items: center;
   padding-bottom: 0;
   z-index: 1000;
-  
+
   /* 初始隐藏，由 JS 控制显形 */
   transform: translateY(-100%);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -69,12 +74,6 @@ body {
   margin: -0.5rem;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .nav-chapters a:hover {
-    color: #000;
-  }
-}
-
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .ghost-nav {
     border-bottom-width: 0.5px;
@@ -82,38 +81,10 @@ body {
 }
 
 /* ================================
-   2. 开场电影海报 (Hero Section)
+   2. 封面标题（悬浮于 sticky 视频场景之上）
+      由 JS 驱动：上飘 + 模糊 + 字距散开 + 淡出，
+      如雪花般向上消散
    ================================ */
-.cover {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  background-color: #000;
-}
-
-.cover-media {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.cover-media video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.8; /* 降低一点亮度让白字显眼 */
-}
-
-.cover-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
-}
-
 .cover-text {
   position: absolute;
   top: 50%;
@@ -123,8 +94,9 @@ body {
   color: #fff;
   width: 90%;
   max-width: 800px;
-  /* 供 JS 滑动淡出使用 */
-  transition: opacity 0.1s, transform 0.1s; 
+  z-index: 4;
+  pointer-events: none; /* 不拦截滚动手势 */
+  will-change: opacity, transform, filter;
 }
 
 .cover-text h1 {
@@ -152,252 +124,405 @@ body {
 }
 
 /* ================================
-   3. 核心窄栏阅读区 (Reading Column)
+   3. Scrollama 滚动叙事区
+      sticky 背景固定 + 前景步骤卡片
+      场景顺序：首屏视频 → 纸张 → 等高线图 → 冰塔林
    ================================ */
 .article-content {
   position: relative;
-  background-color: #fcfcfc;
   z-index: 2;
-  container-type: inline-size;
+  background-color: #0b0f16; /* 与页脚同色，收尾无接缝 */
 }
 
-section {
-  padding: 5rem 0;
+.scrolly {
+  position: relative;
+  background-color: #0b0f16;
 }
 
-/* 将阅读宽度严格限制在最适宜阅读的 600-650px */
-.reading-width {
-  width: 90%;
-  max-width: 650px;
+/* 背景层：sticky 钉在视口顶部，占满整个视口 */
+.scrolly__bg {
+  position: -webkit-sticky; /* 老版本 iOS Safari 兼容 */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh; /* 动态视口高度，配合移动端地址栏伸缩 */
+  margin: 0;
+  overflow: hidden;
+  z-index: 1;
+  background-color: #0b0f16;
+}
+
+/* 单个背景场景：默认透明，激活时交叉淡化进入 */
+.bg-scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  /* 离场时向上飘移 + 轻微缩小，配合淡出形成「雪花向上消散」 */
+  transform: translateY(-2%) scale(1.03);
+  /* 离场过渡带延迟：先等新场景盖上来再淡出，避免双半透明「灰雾」 */
+  transition:
+    opacity 0.5s ease 0.2s,
+    transform 1.2s ease 0.2s;
+  will-change: opacity, transform;
+}
+
+.bg-scene.is-active {
+  opacity: 1;
+  transform: none;
+  /* 进场：立即淡入并缓缓回正，ease-out 曲线带来「落地」感 */
+  transition:
+    opacity 0.6s cubic-bezier(0.33, 0, 0.2, 1),
+    transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 纸张场景：对应原文白底阅读区 */
+.bg-scene--paper {
+  background: linear-gradient(to bottom, #fcfcfc 0%, #f3f4f6 100%);
+}
+
+.bg-scene img,
+.bg-scene video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* 预放大留出边缘余量，JS 视差漂移时不会露出空隙 */
+  transform: scale(1.06);
+  transition: transform 0.2s linear;
+  will-change: transform;
+}
+
+/* 媒体场景（视频/图片）的压暗渐变：保证白字清晰可读 */
+.bg-scene--media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 12, 18, 0.18) 0%,
+    rgba(8, 12, 18, 0.36) 50%,
+    rgba(8, 12, 18, 0.66) 100%
+  );
+}
+
+/* 底部图注：随场景切换文字，空图注时整体淡出 */
+.bg-scene__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: 0.9rem max(5%, env(safe-area-inset-right))
+    calc(0.9rem + env(safe-area-inset-bottom))
+    max(5%, env(safe-area-inset-left));
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 0.82rem;
+  text-align: right;
+  transition: opacity 0.2s ease;
+}
+
+.bg-scene__caption.is-hidden {
+  opacity: 0;
+}
+
+/* ---- 前景步骤 ---- */
+.scrolly__steps {
+  position: relative;
+  z-index: 2;
+}
+
+/* 步骤高度收紧：正文约半屏即触发，文字更快进入视野，减少空白等待 */
+.step {
+  min-height: 55vh;
+  display: flex;
+  align-items: center;
+  padding: 6vh 5%;
+}
+
+/* 全屏切场步骤：无卡片，让背景图独享视口（留约 3/4 屏的呼吸感） */
+.step--media {
+  min-height: 72vh;
+  align-items: stretch;
+}
+
+/* 卡片完全透明：无边框、无底色、无阴影，文字直接落在背景之上 */
+.step__card {
+  width: 100%;
+  max-width: 640px;
   margin: 0 auto;
+  padding: 2.2rem 2.6rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-.reading-width p {
-  font-size: 1.15rem; /* 大号正文字体 */
-  margin-bottom: 1.8rem;
+/* JS 启用后的三态动画（无 JS 时文字完整可读、静态呈现）：
+   未触发（下方待入）→ 微微下沉、半透明，触发时缓缓升起；
+   当前 → 完全清晰；
+   已越过 → 上飘 + 模糊 + 淡出，如雪花向上消散 */
+.js-enabled .step__card {
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.6s ease;
+  will-change: opacity, transform, filter;
+}
+
+.js-enabled .step:not(.is-current):not(.is-passed) .step__card {
+  opacity: 0.55;
+  transform: translateY(36px);
+}
+
+.js-enabled .step.is-current .step__card {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.js-enabled .step.is-passed .step__card {
+  opacity: 0;
+  transform: translateY(-56px) scale(0.985);
+  filter: blur(6px);
+}
+
+.step__card p {
+  font-size: 1.12rem; /* 大号正文字体 */
   color: #222;
   text-align: justify;
+  margin-bottom: 1.2rem;
 }
 
-.reading-width h2 {
-  font-family: -apple-system, sans-serif;
-  font-size: 2rem;
-  margin: 3rem 0 1.5rem;
+.step__card p:last-child {
+  margin-bottom: 0;
+}
+
+.step__kicker {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #8a2f2f; /* 雪地里的暗红 */
+  margin-bottom: 0.9rem;
+}
+
+.step__card h2 {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 1.9rem;
   color: #111;
+  margin-bottom: 1.1rem;
 }
 
 /* 首字下沉效果 */
 .drop-cap {
   float: left;
-  font-size: 5rem;
-  line-height: 0.8;
-  padding-top: 0.2rem;
-  padding-right: 0.5rem;
+  font-size: 4.2rem;
+  line-height: 0.85;
+  padding: 0.25rem 0.55rem 0 0;
   color: #000;
 }
 
-/* ================================
-   4. 行内媒体与引言 (Inline Media)
-   ================================ */
-.inline-media {
-  margin: 3rem 0;
-  width: 100%;
+/* 左右分栏：肖像在左，卫星文案在右（纸张场景） */
+.step__card--split {
+  max-width: 1060px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 3.5rem;
+  align-items: center;
 }
 
-.inline-media img {
+.split-media img {
   width: 100%;
   height: auto;
   display: block;
+  border-radius: 10px;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.25);
 }
 
-figcaption {
-  font-family: -apple-system, sans-serif;
+.split-media figcaption {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   font-size: 0.85rem;
   color: #777;
   text-align: right;
-  margin-top: 0.8rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
+  margin-top: 0.9rem;
 }
 
-.pull-quote {
-  font-size: 1.6rem;
+.split-text p {
+  font-size: 1.15rem;
+  line-height: 1.95;
+  margin-bottom: 0;
+}
+
+/* 引言卡片：对应原文的引用语块（透明，文字直接落于背景） */
+.step__card--quote {
+  max-width: 680px;
+  padding: 2.6rem 3rem;
+}
+
+.step__card--quote p {
+  font-size: 1.55rem;
   font-style: italic;
+  line-height: 1.7;
   color: #555;
-  margin: 3rem -2rem; /* 在大屏幕上突破文本边界 */
   text-align: center;
-  line-height: 1.6;
+  margin: 0;
 }
 
-@container (max-width: 600px) {
-  .pull-quote {
-    margin: 2rem 0;
-    font-size: 1.28rem;
-    padding: 0 0.25rem;
-  }
+/* 结尾金句 */
+.step__final {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111;
+  text-align: center;
+  margin-top: 1.4rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 1.4rem;
 }
 
-/* ================================
-   5. 视差滚动切场 (Parallax Window)
-   ================================ */
-/* 
-  Snow Fall 最惊艳的魔法：利用 background-attachment: fixed
-  让图片钉在浏览器背面，网页内容像开了窗户一样透过去看。
-*/
-.parallax-window {
-  position: relative;
-  width: 100%;
-  height: 80vh;
-  background-attachment: fixed; /* 视差核心 */
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  display: flex;
-  align-items: flex-end; /* 让图注沉到底部 */
-  padding: 0; /* 覆盖 section 默认的 padding */
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .parallax-window {
-    background-attachment: scroll;
-  }
-}
-
-.parallax-caption {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.6);
+/* 文字直接落在媒体场景上时：白字 + 投影（JS 按场景切换 .is-on-media） */
+.scrolly.is-on-media .step__card p,
+.scrolly.is-on-media .step__card h2 {
   color: #fff;
-  padding: max(1rem, env(safe-area-inset-bottom)) max(5%, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(5%, env(safe-area-inset-left));
-  font-family: -apple-system, sans-serif;
-  font-size: 0.85rem;
-  text-align: right;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+
+.scrolly.is-on-media .step__kicker {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.scrolly.is-on-media .drop-cap {
+  color: #fff;
+}
+
+.scrolly.is-on-media .step__final {
+  color: #fff;
+  border-top-color: rgba(255, 255, 255, 0.28);
 }
 
 /* ================================
-   6. 结尾
+   4. 结尾
    ================================ */
 .site-footer {
+  position: relative;
+  z-index: 2;
   background-color: #111;
   color: #888;
   text-align: center;
   padding: 3rem 1rem calc(3rem + env(safe-area-inset-bottom));
-  font-family: -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   font-size: 0.85rem;
 }
 
-/* 响应式微调 */
+/* ================================
+   5. 指针与触屏隔离
+   仅鼠标 / 触控板设备应用 hover 效果；
+   iPhone / iPad 触屏完全不触发，避免「粘住」的悬停态
+   ================================ */
+@media (hover: hover) and (pointer: fine) {
+  .nav-chapters a:hover {
+    color: #000;
+  }
+}
+
+/* ================================
+   6. 响应式微调
+   ================================ */
 @media (max-width: 768px) {
-  .cover {
-    height: 74vh;
-    min-height: 500px;
+  /* 移动端卡片：更紧凑，保证小屏可读性 */
+  .step {
+    min-height: 62vh;
+    padding: 8vh 4%;
   }
 
-  .cover-text {
-    top: 58%;
-    width: 88%;
+  .step--media {
+    min-height: 70vh;
   }
 
-  .cover-media video {
-    object-position: center center;
-    filter: brightness(0.82) saturate(0.95);
+  .step__card {
+    padding: 1.5rem 1.35rem;
   }
 
-  .subtitle {
-    font-size: clamp(1rem, 5vw, 1.5rem);
-  }
-
-  .reading-width {
-    width: 92%;
-    position: relative;
-    z-index: 2;
-  }
-
-  .reading-width p {
-    position: relative;
-    z-index: 2;
-    font-size: 1.04rem;
+  .step__card p {
+    font-size: 1.02rem;
     line-height: 1.85;
-    margin: 0 0 1rem;
-    padding: 0.7rem 0.8rem;
-    background: rgba(255, 255, 255, 0.78);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
-    border-radius: 10px;
-    backdrop-filter: blur(2px);
-    transform: translateY(-12px);
   }
 
-  .inline-media {
-    position: relative;
-    z-index: 1;
-    margin: 2.25rem 0 0;
+  .step__card h2 {
+    font-size: 1.55rem;
   }
 
-  /* 图片后的正文块压回图片底部，保持桌面端的叙事层次 */
-  .inline-media + p {
-    position: relative;
-    z-index: 2;
-    margin-top: -4rem;
-    padding-top: 1.25rem;
-    background: rgba(252, 252, 252, 0.96);
-    box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.12);
+  .drop-cap {
+    font-size: 3.4rem;
   }
 
-  /* 两个全宽切场后，下一段正文以白色阅读块覆盖图片底部 */
-  .parallax-window + section {
-    position: relative;
-    z-index: 2;
-    margin-top: -7rem;
-    padding-top: 0;
+  /* 分栏改为上下堆叠，肖像居中 */
+  .step__card--split {
+    grid-template-columns: 1fr;
+    gap: 1.4rem;
+    padding: 0 0.4rem;
   }
 
-  .parallax-window + section .reading-width {
-    padding: 1.25rem 0.8rem 0;
-    background: rgba(252, 252, 252, 0.94);
-    border-radius: 14px 14px 0 0;
-    box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.12);
+  .split-media {
+    max-width: 320px;
+    margin: 0 auto;
   }
 
-  .parallax-window + section .reading-width h2 {
-    margin-top: 0;
+  .split-text p {
+    font-size: 1.02rem;
   }
 
-  .inline-media img {
-    border-radius: 12px;
+  .step__card--quote {
+    padding: 1.6rem 1.4rem;
   }
 
-  figcaption {
-    margin-top: 0.75rem;
-    padding: 0.7rem 0.8rem;
-    background: rgba(255, 255, 255, 0.72);
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.04);
-  }
-
-  .pull-quote {
-    margin: 2rem 0;
+  .step__card--quote p {
     font-size: 1.28rem;
-    padding: 0 0.25rem;
   }
 
-  .parallax-window {
-    min-height: 52vh;
-    height: 52vh;
-    position: relative;
-    overflow: hidden;
-    background-attachment: scroll;
-    background-position: center center;
+  .bg-scene__caption {
+    font-size: 0.75rem;
+    text-align: left;
+  }
+}
+
+/* 横屏手机：压缩卡片内边距，避免一屏放不下 */
+@media (max-height: 520px) and (orientation: landscape) {
+  .step {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 4dvh 5%;
   }
 
-  .parallax-window::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(10, 15, 20, 0.22), rgba(10, 15, 20, 0));
+  .step__card {
+    max-width: 720px;
+    padding: 1.2rem 1.6rem;
   }
 
-  .parallax-caption {
-    position: relative;
-    z-index: 1;
-    background: rgba(15, 23, 42, 0.55);
+  .step__card--split {
+    max-width: 900px;
+    gap: 2.5rem;
+  }
+}
+
+/* 尊重系统「减弱动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .bg-scene,
+  .js-enabled .step__card,
+  .bg-scene__caption,
+  .ghost-nav {
+    transition: none !important;
+  }
+
+  .js-enabled .step:not(.is-current):not(.is-passed) .step__card,
+  .js-enabled .step.is-passed .step__card {
+    transform: none;
+    filter: none;
   }
 }

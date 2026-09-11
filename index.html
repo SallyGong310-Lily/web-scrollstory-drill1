@@ -1,114 +1,213 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>寂静岭的十二小时 - 深度特稿</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>寂静岭的十二小时 - 深度特稿</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- 顶部幽灵导航（初始隐藏，滑过封面后显示） -->
+    <nav class="ghost-nav" id="ghostNav">
+      <div class="nav-title">白幕：寂静岭的十二小时</div>
+      <ul class="nav-chapters">
+        <li><a href="#chapter-1">1. 进山</a></li>
+        <li><a href="#chapter-2">2. 风暴眼</a></li>
+      </ul>
+    </nav>
 
-  <!-- 顶部幽灵导航（初始隐藏，滑过封面后显示） -->
-  <nav class="ghost-nav" id="ghostNav">
-    <div class="nav-title">白幕：寂静岭的十二小时</div>
-    <ul class="nav-chapters">
-      <li><a href="#chapter-1">1. 进山</a></li>
-      <li><a href="#chapter-2">2. 风暴眼</a></li>
-    </ul>
-  </nav>
+    <!-- 正文区域（含首屏封面，封面视频即第一个 sticky 场景） -->
+    <main class="article-content">
+      <!-- ============================================
+         Scrollama 滚动叙事区
+         场景顺序：首屏视频 → 纸张 → 等高线图 → 冰塔林
+         所有视觉元素（标题 / 文字 / 图片）越过焦点后
+         统一「如雪花向上消散」
+         ============================================ -->
+      <section class="scrolly" id="scrolly" aria-label="滚动叙事章节">
+        <!-- 背景层：sticky 钉在视口顶部，随步骤切换场景 -->
+        <figure class="scrolly__bg" id="scrollyBg">
+          <!-- 场景 0：首屏视频（现代格式 WebM 优先，H.264 MP4 兜底） -->
+          <div
+            class="bg-scene bg-scene--media is-active"
+            data-scene="0"
+            data-caption=""
+          >
+            <video
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="auto"
+              width="1280"
+              height="720"
+              poster="assets/cover-poster.jpg"
+              aria-hidden="true"
+            >
+              <source
+                src="assets/hero-background-loop.webm"
+                type="video/webm"
+              />
+              <source src="assets/hero-background-loop.mp4" type="video/mp4" />
+            </video>
+          </div>
 
-  <!-- 开场：全屏多媒体封面 -->
-  <header class="cover" id="cover">
-    <div class="cover-media">
-      <!-- 循环无声背景视频，带占位海报 -->
-      <video autoplay muted loop playsinline preload="auto" poster="assets/cover-poster.jpg">
-        <source src="assets/hero-background-loop.webm" type="video/webm">
-      </video>
-      <div class="cover-overlay"></div>
-    </div>
-    
-    <div class="cover-text" id="coverText">
-      <h1>雪崩</h1>
-      <p class="subtitle">寂静岭的十二小时，以及那些未能下山的人。</p>
-      <div class="byline">撰文 / Sally</div>
-    </div>
-  </header>
+          <!-- 场景 1：纸张底色（肖像 × 文案左右分栏） -->
+          <div
+            class="bg-scene bg-scene--paper"
+            data-scene="1"
+            data-caption=""
+          ></div>
 
-  <!-- 正文区域 -->
-  <main class="article-content">
-    
-    <!-- 第一章 -->
-    <section id="chapter-1">
-      <div class="reading-width">
-        <p class="drop-cap">气</p>
-        <p class="intro-text">
-          象台发出暴雪红色预警时，第七科考队已经越过了寂静岭的雪线。在这个海拔，空气稀薄得像被抽干了水分的海绵，每一次呼吸都带着血腥味。
-        </p>
-        <p>
-          队长李维拉紧了冲锋衣的领口。他曾在世界各地的极寒地带执行过任务，但寂静岭的风不同。这里的风不呼啸，而是发出一种低沉的、类似重型机械运转的嗡鸣。下午两点，天色已经暗得像黄昏。
-        </p>
+          <!-- 场景 2：等高线拓扑图（延续到第二章文字背后） -->
+          <div
+            class="bg-scene bg-scene--media"
+            data-scene="2"
+            data-caption="寂静岭等高线拓扑图。红点标记为第七科考队最后发出信号的位置。"
+          >
+            <img
+              src="assets/parallax-map.avif"
+              alt="寂静岭等高线拓扑图"
+              width="1600"
+              height="900"
+              fetchpriority="low"
+            />
+          </div>
 
-        <!-- 突破窄栏的行内图片（居中，带优美的图注） -->
-        <figure class="inline-media">
-          <img src="assets/inline-portrait.jpg" alt="队长李维的档案肖像">
-          <figcaption>队长李维在出发前的留影。他曾说：“雪山从不杀人，是傲慢在杀人。”</figcaption>
+          <!-- 场景 3：冰塔林背影（延续到尾声文字背后，不带图注） -->
+          <div class="bg-scene bg-scene--media" data-scene="3" data-caption="">
+            <img
+              src="assets/parallax-climber.avif"
+              alt="雪坡上攀登者的背影"
+              width="1600"
+              height="900"
+              fetchpriority="low"
+            />
+          </div>
+
+          <!-- 封面标题：随滚动如雪花般消散（JS 驱动；pointer-events 不拦截滑动） -->
+          <div class="cover-text" id="coverText">
+            <h1 id="coverTitle">雪崩</h1>
+            <p class="subtitle">寂静岭的十二小时，以及那些未能下山的人。</p>
+            <div class="byline">撰文 / Sally</div>
+          </div>
+
+          <!-- 底部图注，由 JS 随场景切换 -->
+          <figcaption
+            class="bg-scene__caption is-hidden"
+            id="bgCaption"
+          ></figcaption>
         </figure>
 
-        <p>
-          根据卫星回传的数据，冷锋将在三小时后彻底吞噬他们所在的 4 号营地。撤退路线只有一条，那就是穿过被称为“鬼见愁”的狭窄冰塔林。但温度下降的速度超出了所有气象模型的预测，电子设备开始接连失效，GPS 屏幕上的光斑闪烁了两下，彻底熄灭。
-        </p>
-      </div>
-    </section>
+        <!-- 前景步骤：data-scene 决定该步骤触发哪张背景 -->
+        <div class="scrolly__steps">
+          <!-- 步骤 1：第一章 · 进山（文字从下方升起，压在首屏视频上） -->
+          <div class="step" data-scene="0" id="chapter-1">
+            <article class="step__card">
+              <span class="step__kicker">第一章 · 进山</span>
+              <p class="drop-cap">气</p>
+              <p>
+                象台发出暴雪红色预警时，第七科考队已经越过了寂静岭的雪线。在这个海拔，空气稀薄得像被抽干了水分的海绵，每一次呼吸都带着血腥味。
+              </p>
+              <p>
+                队长李维拉紧了冲锋衣的领口。他曾在世界各地的极寒地带执行过任务，但寂静岭的风不同。这里的风不呼啸，而是发出一种低沉的、类似重型机械运转的嗡鸣。下午两点，天色已经暗得像黄昏。
+              </p>
+            </article>
+          </div>
 
-    <!-- 视差多媒体窗口（地图切场） -->
-    <section class="parallax-window" style="background-image: url('assets/parallax-map.avif');">
-      <div class="parallax-caption">
-        寂静岭等高线拓扑图。红点标记为第七科考队最后发出信号的位置。
-      </div>
-    </section>
+          <!-- 步骤 2：肖像在左 × 卫星文案在右（纸张场景） -->
+          <div class="step" data-scene="1">
+            <div class="step__card step__card--split">
+              <figure class="split-media">
+                <img
+                  src="assets/inline-portrait.jpg"
+                  alt="队长李维的档案肖像"
+                  width="810"
+                  height="1080"
+                  loading="lazy"
+                  fetchpriority="low"
+                />
+                <figcaption>
+                  队长李维在出发前的留影。他曾说：“雪山从不杀人，是傲慢在杀人。”
+                </figcaption>
+              </figure>
+              <div class="split-text">
+                <p>
+                  根据卫星回传的数据，冷锋将在三小时后彻底吞噬他们所在的 4
+                  号营地。撤退路线只有一条，那就是穿过被称为“鬼见愁”的狭窄冰塔林。但温度下降的速度超出了所有气象模型的预测，电子设备开始接连失效，GPS
+                  屏幕上的光斑闪烁了两下，彻底熄灭。
+                </p>
+              </div>
+            </div>
+          </div>
 
-    <!-- 第二章 -->
-    <section id="chapter-2">
-      <div class="reading-width">
-        <h2>风暴眼中的寂静</h2>
-        <p>
-          晚八点，风暴达到了顶峰。如果此时有人能从万米高空俯瞰，会看到整个寂静岭被一个巨大的白色旋涡包裹。但在风暴的最中心，反而出现了一种诡异的平静。
-        </p>
-        <p>
-          雪花不再是横向飞舞，而是像铅块一样垂直砸下。营地帐篷的支撑杆在积雪的重压下发出痛苦的呻吟。无线电里只剩下沙沙的静电噪音，像是有无数人在用气声低语。
-        </p>
-        
-        <!-- 引用语块 -->
-        <blockquote class="pull-quote">
-          “那一刻，我感觉不是我们在攀登雪山，而是雪山在缓慢地咀嚼我们。”
-        </blockquote>
+          <!-- 步骤 3：等高线图全屏切场（无文字卡片） -->
+          <div class="step step--media" data-scene="2"></div>
 
-        <p>
-          李维知道，他们不能再等下去了。留在帐篷里是慢性死亡，冲出去也许还有一线生机。他点燃了最后一根防风火柴，微弱的橘色火光在五个队员绝望的瞳孔里跳跃。
-        </p>
-      </div>
-    </section>
+          <!-- 步骤 4：第二章 · 风暴眼（文字压在等高线图上） -->
+          <div class="step" data-scene="2" id="chapter-2">
+            <article class="step__card">
+              <span class="step__kicker">第二章 · 风暴眼</span>
+              <h2>风暴眼中的寂静</h2>
+              <p>
+                晚八点，风暴达到了顶峰。如果此时有人能从万米高空俯瞰，会看到整个寂静岭被一个巨大的白色旋涡包裹。但在风暴的最中心，反而出现了一种诡异的平静。
+              </p>
+              <p>
+                雪花不再是横向飞舞，而是像铅块一样垂直砸下。营地帐篷的支撑杆在积雪的重压下发出痛苦的呻吟。无线电里只剩下沙沙的静电噪音，像是有无数人在用气声低语。
+              </p>
+            </article>
+          </div>
 
-    <!-- 视差多媒体窗口（背影切场） -->
-    <section class="parallax-window" style="background-image: url('assets/parallax-climber.avif');">
-      <!-- 纯视觉切场，不带图注 -->
-    </section>
+          <!-- 步骤 5：引言（压在等高线图上） -->
+          <div class="step" data-scene="2">
+            <blockquote class="step__card step__card--quote">
+              <p>
+                “那一刻，我感觉不是我们在攀登雪山，而是雪山在缓慢地咀嚼我们。”
+              </p>
+            </blockquote>
+          </div>
 
-    <section class="ending-section">
-      <div class="reading-width">
-        <p>
-          此后的十二小时，成为了现代登山史上的一个谜。搜救队在三天后抵达 4 号营地时，只找到了半埋在雪中的空帐篷，以及一本被冻成冰块的航海日志。
-        </p>
-        <p>最后一页上，只有潦草的一句话：“雪太白了，白得让人想睡去。”</p>
-      </div>
-    </section>
+          <!-- 步骤 6：火柴（压在等高线图上） -->
+          <div class="step" data-scene="2">
+            <article class="step__card">
+              <p>
+                李维知道，他们不能再等下去了。留在帐篷里是慢性死亡，冲出去也许还有一线生机。他点燃了最后一根防风火柴，微弱的橘色火光在五个队员绝望的瞳孔里跳跃。
+              </p>
+            </article>
+          </div>
 
-  </main>
+          <!-- 步骤 7：冰塔林全屏切场（纯视觉，无图注） -->
+          <div class="step step--media" data-scene="3"></div>
 
-  <footer class="site-footer">
-    <p>版权所有 © 虚拟新闻周刊。排版致敬 The New York Times 《Snow Fall》。</p>
-  </footer>
+          <!-- 步骤 8：尾声（文字压在冰塔林上） -->
+          <div class="step" data-scene="3">
+            <article class="step__card">
+              <p>
+                此后的十二小时，成为了现代登山史上的一个谜。搜救队在三天后抵达 4
+                号营地时，只找到了半埋在雪中的空帐篷，以及一本被冻成冰块的航海日志。
+              </p>
+              <p class="step__final">
+                最后一页上，只有潦草的一句话：“雪太白了，白得让人想睡去。”
+              </p>
+            </article>
+          </div>
+        </div>
+        <!-- /.scrolly__steps -->
+      </section>
+      <!-- /.scrolly -->
+    </main>
 
-  <script src="js/app.js"></script>
-</body>
+    <footer class="site-footer">
+      <p>
+        版权所有 © 虚拟新闻周刊。排版致敬 The New York Times 《Snow Fall》。
+      </p>
+    </footer>
+
+    <!-- 本地依赖：scrollama 必须先于 app.js 加载；defer 避免阻塞渲染 -->
+    <script src="js/scrollama.min.js" defer></script>
+    <script src="js/app.js" defer></script>
+  </body>
 </html>
