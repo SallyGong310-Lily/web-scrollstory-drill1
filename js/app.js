@@ -1,3 +1,20 @@
+// ═══════════════════════════════════════════════════════════
+// 模块分工
+//   1. 首屏：封面标题雪花消散（逐帧）+ 幽灵导航 + 视频自动播放兜底
+//   2. 连续运动：背景视差（整段叙事进度 0→1）+ 视频镜头呼吸
+//   3. Scrollama：步骤触发、场景切换、卡片三态、导航章节高亮
+//   4. 雪花粒子引擎（独立 rAF，仅雪场景激活时运行）
+//   5. 分栏页消散工厂：文案 / 肖像 / 图注各自以焦点线触发
+// 关键教训
+//   · 连续运动必须由连续的滚动值驱动——scrollama 的 progress 对
+//     每个步骤从 0 重新计数，跨步骤会产生「上移后突然回落」的锯齿
+//   · 文字「散开」用 scaleX（不参与排版）；letter-spacing 会让
+//     两端对齐段落重新断行、排版跳动
+//   · 视频镜头缩放交给浏览器 GPU（亚像素插值），ffmpeg zoompan 的
+//     整数取整会颤抖；按 currentTime 计算，暂停 / 恢复永不失步
+//   · 所有逐帧更新的元素都不写 CSS transition（互相拖累）
+// ═══════════════════════════════════════════════════════════
+
 // 标记 JS 可用：滚动步骤的三态动画仅在此时启用
 // （无 JS 时所有文字保持静态、完整可读）
 document.documentElement.classList.add("js-enabled");
@@ -5,6 +22,8 @@ document.documentElement.classList.add("js-enabled");
 document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================================
      1. 首屏：封面标题雪花式消散 + 幽灵导航 + 视频自动播放兜底
+     职责：唯一的滚动 rAF 总控循环在这里注册——封面消散、
+           分栏消散、背景视差、导航显隐都挂在同一条循环上
      ========================================================== */
   const scrollyBg = document.getElementById("scrollyBg");
   const coverText = document.getElementById("coverText");
@@ -34,6 +53,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 视频镜头呼吸：正放段缓缓推近、倒放段缓缓拉回
   // （与 ping-pong 循环文件严格同步：按 currentTime 计算，缩放交给 GPU 亚像素插值，无抖动）
+  // 复盘：曾把缩放烧进视频（ffmpeg zoompan）——整数取整导致颤抖；
+  //       按 currentTime 而非墙钟时间计算，视频暂停（场景切走）后恢复也不失步
   const VIDEO_HALF = 8.09; // 正放 / 倒放各占的时长（秒），与视频文件一致
 
   const zoomOfVideo = (t) => {
@@ -123,8 +144,10 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // 「雪花消散」工厂：元素中心越过焦点线后，连续上飘 + 模糊 + 淡出
-  // 仅接管退出阶段；进入阶段不干预，交给卡片三态。
+  // 分工：进入阶段归 CSS 三态（升起、变清晰），退出阶段归本工厂（逐帧消散）
   // 每个元素按自身位置独立触发，先后自然错开（图片先散、图注随后）。
+  // 复盘：曾用 letter-spacing 做「字距散开」，导致两端对齐段落重新断行，
+  //       改用 scaleX——纯视觉横向拉伸，不参与排版计算
   const makeSnowDissolve = (
     el,
     { blur = 8, rise = 60, shrink = 0, spread = 0 } = {},
@@ -238,6 +261,86 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeScene = -1;
   let captionTimer = null;
 
+  /* ==========================================================
+     雪花粒子层：带 bg-scene--snow 的场景激活时飘雪
+     独立 rAF 循环（雪花需要持续动画，不依赖滚动事件）
+     职责边界：本引擎只负责「飘雪」本身；可见性（淡入淡出）由
+     activateScene 按场景标记切换；雪量按面积自适应、retina 适配
+     ========================================================== */
+  const snowCanvas = document.getElementById("snowCanvas");
+  let snowCtx = null;
+  let snowFlakes = [];
+  let snowRunning = false;
+  let snowRafId = 0;
+  let snowLast = 0;
+
+  const spawnFlake = (w, h, anywhere) => ({
+    x: Math.random() * w,
+    y: anywhere ? Math.random() * h : -10, // 初始化时铺满全屏，之后从顶部出生
+    r: 0.6 + Math.random() * 1.8, // 半径 0.6~2.4px
+    speed: 18 + Math.random() * 52, // 落速 18~70px/s
+    swayAmp: 8 + Math.random() * 22, // 左右摆动幅度
+    swayFreq: 0.3 + Math.random() * 0.9, // 摆动频率
+    phase: Math.random() * Math.PI * 2,
+    opacity: 0.25 + Math.random() * 0.65,
+  });
+
+  const resizeSnow = () => {
+    if (!snowCanvas) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = snowCanvas.clientWidth;
+    const h = snowCanvas.clientHeight;
+    snowCanvas.width = Math.round(w * dpr);
+    snowCanvas.height = Math.round(h * dpr);
+    snowCtx = snowCanvas.getContext("2d");
+    snowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // 雪量按面积自适应，桌面约 120 片封顶
+    const count = Math.min(120, Math.round((w * h) / 12000));
+    snowFlakes = Array.from({ length: count }, () => spawnFlake(w, h, true));
+  };
+
+  const stepSnow = (now) => {
+    if (!snowRunning) return;
+    const dt = Math.min(0.05, (now - snowLast) / 1000); // 防止切后台后跳帧
+    snowLast = now;
+
+    const w = snowCanvas.clientWidth;
+    const h = snowCanvas.clientHeight;
+    const t = now / 1000;
+
+    snowCtx.clearRect(0, 0, w, h);
+    for (const f of snowFlakes) {
+      f.y += f.speed * dt;
+      const x = f.x + Math.sin(t * f.swayFreq + f.phase) * f.swayAmp;
+      if (f.y > h + 8) {
+        Object.assign(f, spawnFlake(w, h, false)); // 落底后从顶部重生
+        continue;
+      }
+      snowCtx.beginPath();
+      snowCtx.arc(x, f.y, f.r, 0, Math.PI * 2);
+      snowCtx.fillStyle = `rgba(255, 255, 255, ${f.opacity})`;
+      snowCtx.fill();
+    }
+
+    snowRafId = requestAnimationFrame(stepSnow);
+  };
+
+  const startSnow = () => {
+    if (snowRunning || !snowCtx || prefersReducedMotion) return;
+    snowRunning = true;
+    snowLast = performance.now();
+    snowRafId = requestAnimationFrame(stepSnow);
+  };
+
+  const stopSnow = () => {
+    snowRunning = false;
+    if (snowRafId) cancelAnimationFrame(snowRafId);
+  };
+
+  resizeSnow();
+  window.addEventListener("resize", resizeSnow, { passive: true });
+
   // 场景切换：交叉淡化 + 离场场景向上消散
   const activateScene = (sceneIndex) => {
     if (sceneIndex === activeScene) return;
@@ -274,6 +377,20 @@ document.addEventListener("DOMContentLoaded", () => {
     activeMedia = activeSceneEl
       ? activeSceneEl.querySelector("img, video")
       : null;
+
+    // 雪花粒子层：仅当激活场景标记了 bg-scene--snow 时飘雪
+    if (snowCanvas) {
+      const snowOn =
+        activeSceneEl &&
+        activeSceneEl.classList.contains("bg-scene--snow") &&
+        !prefersReducedMotion;
+      snowCanvas.classList.toggle("is-active", Boolean(snowOn));
+      if (snowOn) {
+        startSnow();
+      } else {
+        stopSnow();
+      }
+    }
 
     // 离开视频场景时彻底隐藏封面标题（防止锚点跳转后残留）
     if (coverText && sceneIndex !== 0) {
@@ -329,8 +446,10 @@ document.addEventListener("DOMContentLoaded", () => {
     scroller
       .setup({
         step: ".step",
-        offset: 0.55, // 步骤顶边越过视口 55% 高度处触发，文字更早进入焦点
-        order: true, // 保证滚动方向变化时仍按文档顺序触发
+        // 触发线在视口 55% 高度处：文字进入下半区即触发，
+        // 配合 55vh 的步骤高度，约滚半屏文字就到焦点
+        offset: 0.55,
+        order: true, // 滚动方向变化时仍按文档顺序触发
         debug: false,
       })
       .onStepEnter(({ element, index }) => {

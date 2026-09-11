@@ -10,7 +10,22 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <!-- 顶部幽灵导航（初始隐藏，滑过封面后显示） -->
+    <!--
+      ═══════════════════════════════════════════════════════
+      架构总览：滚动叙事 = sticky 背景层 + 前景步骤流
+      · 分工职责：
+          HTML —— 只声明结构与契约（data-scene 绑定、id 供 JS 引用）
+          CSS  —— 状态类（三态 / 激活）、过渡曲线、响应式、无障碍
+          JS   —— 连续运动（消散 / 视差 / 镜头呼吸 / 飘雪）与步骤触发
+      · 场景顺序：0 首屏视频（延续到分栏页）→ 1 等高线图 → 2 冰塔林
+      · 关键教训：连续运动必须由连续的滚动值驱动，离散的步骤事件会
+        产生跳变；接缝类问题（场景交叉、视频循环）一律在源头解决
+      ═══════════════════════════════════════════════════════
+    -->
+
+    <!-- 顶部幽灵导航（初始隐藏，滑过封面后显示）
+         复盘：初版是不透明白条，与暗色电影感脱节；改为暗色磨砂玻璃，
+         与底部图注条、场景压暗渐变统一成一种「玻璃语言」 -->
     <nav class="ghost-nav" id="ghostNav">
       <div class="nav-title">雪崩：寂静岭的十二小时</div>
       <ul class="nav-chapters">
@@ -30,7 +45,10 @@
       <section class="scrolly" id="scrolly" aria-label="滚动叙事章节">
         <!-- 背景层：sticky 钉在视口顶部，随步骤切换场景 -->
         <figure class="scrolly__bg" id="scrollyBg">
-          <!-- 场景 0：首屏视频（H.264 MP4，全平台兼容） -->
+          <!-- 场景 0：首屏视频（H.264 MP4，全平台兼容）
+               复盘：视频为正反播（ping-pong）循环——正放推近、倒放拉回，
+               首尾同一帧、循环点数学无缝；镜头呼吸由 JS 按 currentTime
+               驱动，不烧进文件（ffmpeg zoompan 整数取整会颤抖） -->
           <div
             class="bg-scene bg-scene--media is-active"
             data-scene="0"
@@ -51,7 +69,9 @@
             </video>
           </div>
 
-          <!-- 场景 1：等高线拓扑图（延续到第二章文字背后） -->
+          <!-- 场景 1：等高线拓扑图（延续到第二章文字背后）
+               复盘：交叉淡化时 JS 会把新场景提到最上层、旧场景延迟淡出——
+               若新旧两层同时半透明，中途会叠出「灰雾」 -->
           <div
             class="bg-scene bg-scene--media"
             data-scene="1"
@@ -66,8 +86,12 @@
             />
           </div>
 
-          <!-- 场景 2：冰塔林背影（延续到尾声文字背后，不带图注） -->
-          <div class="bg-scene bg-scene--media" data-scene="2" data-caption="">
+          <!-- 场景 2：冰塔林背影（延续到尾声文字背后，不带图注；激活时飘雪） -->
+          <div
+            class="bg-scene bg-scene--media bg-scene--snow"
+            data-scene="2"
+            data-caption=""
+          >
             <img
               src="assets/parallax-climber.avif"
               alt="雪坡上攀登者的背影"
@@ -76,6 +100,15 @@
               fetchpriority="low"
             />
           </div>
+
+          <!-- 雪花粒子层：仅带 bg-scene--snow 的场景激活时飘雪
+               分层：背景图（下）→ 雪花 canvas（中）→ 前景文字卡片（上）；
+               独立 rAF 循环，场景不激活时完全停转、零开销 -->
+          <canvas
+            class="snow-canvas"
+            id="snowCanvas"
+            aria-hidden="true"
+          ></canvas>
 
           <!-- 封面标题：随滚动如雪花般消散（JS 驱动；pointer-events 不拦截滑动） -->
           <div class="cover-text" id="coverText">
@@ -91,7 +124,9 @@
           ></figcaption>
         </figure>
 
-        <!-- 前景步骤：data-scene 决定该步骤触发哪张背景 -->
+        <!-- 前景步骤：data-scene 决定该步骤触发哪张背景
+             契约：data-scene 值必须与背景场景的 data-scene 一致；
+             空步骤（step--media）用于整屏切场，不承载文字 -->
         <div class="scrolly__steps">
           <!-- 步骤 1：第一章 · 进山（文字从下方升起，压在首屏视频上） -->
           <div class="step" data-scene="0" id="chapter-1">
@@ -107,7 +142,10 @@
             </article>
           </div>
 
-          <!-- 步骤 2：肖像在左 × 卫星文案在右（背景延续首屏视频） -->
+          <!-- 步骤 2：肖像在左 × 卫星文案在右（背景延续首屏视频）
+               契约：#portraitImg / #portraitCaption / #splitText 与 JS
+               消散器一一对应；三者各自以「自身中心过焦点线」为触发点，
+               先后错落消散 -->
           <div class="step" data-scene="0">
             <div class="step__card step__card--split">
               <figure class="split-media">
@@ -184,6 +222,11 @@
               </p>
             </article>
           </div>
+
+          <!-- 尾部滚动余量：让尾声文字继续上移至画面中央，背景保持 sticky
+               复盘：没有这段余量时，滚动条的最后行程被「图片随区块滚走」
+               吃掉，文字永远到不了画面中央 -->
+          <div class="scrolly__tail" aria-hidden="true"></div>
         </div>
         <!-- /.scrolly__steps -->
       </section>
