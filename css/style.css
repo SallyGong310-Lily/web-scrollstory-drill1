@@ -336,14 +336,17 @@ figcaption {
   .inline-media + p {
     position: relative;
     z-index: 2;
-    margin-top: -2.5rem;
+    margin-top: -4rem;
+    padding-top: 1.25rem;
+    background: rgba(252, 252, 252, 0.96);
+    box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.12);
   }
 
   /* 两个全宽切场后，下一段正文以白色阅读块覆盖图片底部 */
   .parallax-window + section {
     position: relative;
     z-index: 2;
-    margin-top: -4.5rem;
+    margin-top: -7rem;
     padding-top: 0;
   }
 
@@ -352,6 +355,10 @@ figcaption {
     background: rgba(252, 252, 252, 0.94);
     border-radius: 14px 14px 0 0;
     box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.12);
+  }
+
+  .parallax-window + section .reading-width h2 {
+    margin-top: 0;
   }
 
   .inline-media img {
