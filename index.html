@@ -12,7 +12,7 @@
   <body>
     <!-- 顶部幽灵导航（初始隐藏，滑过封面后显示） -->
     <nav class="ghost-nav" id="ghostNav">
-      <div class="nav-title">白幕：寂静岭的十二小时</div>
+      <div class="nav-title">雪崩：寂静岭的十二小时</div>
       <ul class="nav-chapters">
         <li><a href="#chapter-1">1. 进山</a></li>
         <li><a href="#chapter-2">2. 风暴眼</a></li>
@@ -30,7 +30,7 @@
       <section class="scrolly" id="scrolly" aria-label="滚动叙事章节">
         <!-- 背景层：sticky 钉在视口顶部，随步骤切换场景 -->
         <figure class="scrolly__bg" id="scrollyBg">
-          <!-- 场景 0：首屏视频（现代格式 WebM 优先，H.264 MP4 兜底） -->
+          <!-- 场景 0：首屏视频（H.264 MP4，全平台兼容） -->
           <div
             class="bg-scene bg-scene--media is-active"
             data-scene="0"
@@ -47,10 +47,6 @@
               poster="assets/cover-poster.jpg"
               aria-hidden="true"
             >
-              <source
-                src="assets/hero-background-loop.webm"
-                type="video/webm"
-              />
               <source src="assets/hero-background-loop.mp4" type="video/mp4" />
             </video>
           </div>
@@ -122,12 +118,13 @@
                   height="1080"
                   loading="lazy"
                   fetchpriority="low"
+                  id="portraitImg"
                 />
-                <figcaption>
+                <figcaption id="portraitCaption">
                   队长李维在出发前的留影。他曾说：“雪山从不杀人，是傲慢在杀人。”
                 </figcaption>
               </figure>
-              <div class="split-text">
+              <div class="split-text" id="splitText">
                 <p>
                   根据卫星回传的数据，冷锋将在三小时后彻底吞噬他们所在的 4
                   号营地。撤退路线只有一条，那就是穿过被称为“鬼见愁”的狭窄冰塔林。但温度下降的速度超出了所有气象模型的预测，电子设备开始接连失效，GPS

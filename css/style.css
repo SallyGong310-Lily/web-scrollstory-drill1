@@ -347,6 +347,7 @@ body {
   display: block;
   border-radius: 10px;
   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.25);
+  will-change: opacity, transform, filter; /* JS 逐帧驱动消散 */
 }
 
 .split-media figcaption {
@@ -355,6 +356,11 @@ body {
   color: #777;
   text-align: right;
   margin-top: 0.9rem;
+  will-change: opacity, transform, filter; /* JS 逐帧驱动消散 */
+}
+
+.split-text {
+  will-change: opacity, transform, filter; /* JS 逐帧驱动消散，预留合成层 */
 }
 
 .split-text p {

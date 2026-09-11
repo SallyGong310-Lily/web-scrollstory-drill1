@@ -32,6 +32,17 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   updateParallaxMetrics();
 
+  // 视频镜头呼吸：正放段缓缓推近、倒放段缓缓拉回
+  // （与 ping-pong 循环文件严格同步：按 currentTime 计算，缩放交给 GPU 亚像素插值，无抖动）
+  const VIDEO_HALF = 8.09; // 正放 / 倒放各占的时长（秒），与视频文件一致
+
+  const zoomOfVideo = (t) => {
+    const cycle = VIDEO_HALF * 2;
+    const phase = ((t % cycle) + cycle) % cycle; // 0 → cycle
+    const p = phase < VIDEO_HALF ? phase / VIDEO_HALF : 2 - phase / VIDEO_HALF;
+    return 1 + 0.12 * p; // 1.0 → 1.12 → 1.0
+  };
+
   const tryPlayVideo = () => {
     if (!coverVideo) return;
 
@@ -111,6 +122,69 @@ document.addEventListener("DOMContentLoaded", () => {
       coverTitle.style.letterSpacing = `${(p * 0.18).toFixed(3)}em`;
   };
 
+  // 「雪花消散」工厂：元素中心越过焦点线后，连续上飘 + 模糊 + 淡出
+  // 仅接管退出阶段；进入阶段不干预，交给卡片三态。
+  // 每个元素按自身位置独立触发，先后自然错开（图片先散、图注随后）。
+  const makeSnowDissolve = (
+    el,
+    { blur = 8, rise = 60, shrink = 0, spread = 0 } = {},
+  ) => {
+    return () => {
+      if (!el || prefersReducedMotion) return;
+
+      const reset = () => {
+        el.style.opacity = "";
+        el.style.filter = "";
+        el.style.transform = "";
+        el.style.letterSpacing = "";
+      };
+
+      const rect = el.getBoundingClientRect();
+      // 远离视口时复位，避免无谓的样式计算
+      if (
+        rect.top > window.innerHeight * 1.5 ||
+        rect.bottom < -window.innerHeight
+      ) {
+        reset();
+        return;
+      }
+
+      // 以视口 45% 高度处为焦点线
+      const delta = rect.top + rect.height / 2 - window.innerHeight * 0.45;
+      const range = window.innerHeight * 0.5;
+
+      if (delta > 0) {
+        // 未到焦点：不干预，进入效果完全交给卡片三态
+        reset();
+        return;
+      }
+
+      // 越过焦点：如雪花向上消散
+      const p = Math.min(1, -delta / range); // 0=刚到焦点 1=完全越过
+      el.style.opacity = (1 - p).toFixed(3);
+      el.style.filter = `blur(${(p * blur).toFixed(2)}px)`;
+      // 文字「散开」用 scaleX（纯视觉横向拉伸，不参与排版、不引发换行重排）；
+      // 不能用 letter-spacing——它会改变字符宽度，导致两端对齐段落重新断行
+      el.style.transform = `translateY(${(-p * rise).toFixed(
+        1,
+      )}px) scaleX(${(1 + p * spread).toFixed(3)}) scale(${(1 - p * shrink).toFixed(3)})`;
+    };
+  };
+
+  // 分栏页三个元素各自独立消散：文案 / 肖像 / 图注
+  const updateSplitTextDissolve = makeSnowDissolve(
+    document.getElementById("splitText"),
+    { blur: 8, rise: 60, spread: 0.05 },
+  );
+  const updatePortraitImgDissolve = makeSnowDissolve(
+    document.getElementById("portraitImg"),
+    { blur: 10, rise: 70, shrink: 0.05 },
+  );
+  const updatePortraitCaptionDissolve = makeSnowDissolve(
+    document.getElementById("portraitCaption"),
+    { blur: 8, rise: 50, spread: 0.04 },
+  );
+
   // 滚动事件监听：用 rAF 将视觉更新同步到浏览器渲染帧
   let isTicking = false;
 
@@ -124,14 +198,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const scrollY = window.scrollY || window.pageYOffset;
 
         updateCoverText(scrollY);
+        updateSplitTextDissolve();
+        updatePortraitImgDissolve();
+        updatePortraitCaptionDissolve();
 
-        // 背景内容视差：随叙事进度 0→1 连续上移 ±2.5%，与文字同向、无跳变
+        // 背景内容视差 + 视频镜头呼吸
+        // （缩放由浏览器 GPU 亚像素插值，替代 ffmpeg zoompan 的整数抖动）
         if (activeMedia && !prefersReducedMotion) {
           const p = Math.min(1, Math.max(0, scrollY / parallaxTravel));
           const drift = (0.5 - p) * 5;
+          let scale = 1.06; // 视差漂移的过扫余量
+          if (activeMedia === coverVideo) {
+            scale *= zoomOfVideo(coverVideo.currentTime || 0);
+          }
           activeMedia.style.transform = `translateY(${drift.toFixed(
             2,
-          )}%) scale(1.06)`;
+          )}%) scale(${scale.toFixed(4)})`;
         }
 
         if (ghostNav) {
