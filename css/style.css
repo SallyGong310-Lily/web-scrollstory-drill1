@@ -35,8 +35,11 @@ body {
   padding-top: env(safe-area-inset-top);
   padding-left: max(2rem, env(safe-area-inset-left));
   padding-right: max(2rem, env(safe-area-inset-right));
-  background-color: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid #ddd;
+  /* 暗色磨砂玻璃：与底部图注、场景压暗同一视觉语言 */
+  background-color: rgba(8, 12, 18, 0.5);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -56,7 +59,7 @@ body {
 .nav-title {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #000;
+  color: #fff;
 }
 
 .nav-chapters {
@@ -67,11 +70,20 @@ body {
 
 .nav-chapters a {
   text-decoration: none;
-  color: #666;
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.85rem;
-  transition: color 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
   padding: 0.5rem;
   margin: -0.5rem;
+  border-bottom: 1px solid transparent; /* 当前章节暗红下划线 */
+}
+
+/* 当前章节：亮白 + 暗红下划线，呼应正文 kicker */
+.nav-chapters a.is-active {
+  color: #fff;
+  border-bottom-color: #d96a5f;
 }
 
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
@@ -423,7 +435,7 @@ body {
    ================================ */
 @media (hover: hover) and (pointer: fine) {
   .nav-chapters a:hover {
-    color: #000;
+    color: #fff;
   }
 }
 

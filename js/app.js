@@ -219,10 +219,21 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // 高亮当前步骤；已越过的步骤标记为 is-passed（雪花式向上消散）
+  // 同时联动幽灵导航：高亮当前章节链接
+  const chapter2Index = steps.findIndex((s) => s.id === "chapter-2");
+  const navChapterLinks = Array.from(
+    document.querySelectorAll(".nav-chapters a"),
+  );
+
   const markCurrentStep = (index) => {
     steps.forEach((step, i) => {
       step.classList.toggle("is-current", i === index);
       step.classList.toggle("is-passed", i < index);
+    });
+
+    const chapter = chapter2Index >= 0 && index >= chapter2Index ? 1 : 0;
+    navChapterLinks.forEach((link, i) => {
+      link.classList.toggle("is-active", i === chapter);
     });
   };
 
