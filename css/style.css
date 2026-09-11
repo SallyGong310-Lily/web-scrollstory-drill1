@@ -186,9 +186,9 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
-  /* 预放大留出边缘余量，JS 视差漂移时不会露出空隙 */
+  /* 预放大留出边缘余量，JS 连续视差漂移时不会露出空隙
+     （transform 由 rAF 逐帧驱动，不加过渡以免滞后感） */
   transform: scale(1.06);
-  transition: transform 0.2s linear;
   will-change: transform;
 }
 

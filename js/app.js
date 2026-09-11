@@ -20,6 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
   let coverHeight = scrollyBg ? scrollyBg.offsetHeight : window.innerHeight;
   let hasPlaybackFallback = false;
 
+  // 背景视差：随整段叙事进度连续上移（非逐步骤重置，避免跳变）
+  const scrollySection = document.getElementById("scrolly");
+  let activeMedia = null; // 当前激活场景的图片/视频元素
+  let parallaxTravel = 1; // 可滚动总行程 = 叙事区高度 - 视口高度
+
+  const updateParallaxMetrics = () => {
+    parallaxTravel = scrollySection
+      ? Math.max(1, scrollySection.offsetHeight - window.innerHeight)
+      : 1;
+  };
+  updateParallaxMetrics();
+
   const tryPlayVideo = () => {
     if (!coverVideo) return;
 
@@ -76,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "resize",
     () => {
       coverHeight = scrollyBg ? scrollyBg.offsetHeight : window.innerHeight;
+      updateParallaxMetrics();
     },
     { passive: true },
   );
@@ -111,6 +124,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const scrollY = window.scrollY || window.pageYOffset;
 
         updateCoverText(scrollY);
+
+        // 背景内容视差：随叙事进度 0→1 连续上移 ±2.5%，与文字同向、无跳变
+        if (activeMedia && !prefersReducedMotion) {
+          const p = Math.min(1, Math.max(0, scrollY / parallaxTravel));
+          const drift = (0.5 - p) * 5;
+          activeMedia.style.transform = `translateY(${drift.toFixed(
+            2,
+          )}%) scale(1.06)`;
+        }
 
         if (ghostNav) {
           ghostNav.classList.toggle("is-visible", scrollY > coverHeight * 0.6);
@@ -158,13 +180,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // 文字是否直接压在媒体场景（视频/图片）上：切换白字投影样式
-    const scrollySection = document.getElementById("scrolly");
     if (scrollySection) {
       const isMedia = scenes[sceneIndex]
         ? scenes[sceneIndex].classList.contains("bg-scene--media")
         : false;
       scrollySection.classList.toggle("is-on-media", isMedia);
     }
+
+    // 记录当前场景的媒体元素，供连续视差使用
+    const activeSceneEl = scenes[sceneIndex];
+    activeMedia = activeSceneEl
+      ? activeSceneEl.querySelector("img, video")
+      : null;
 
     // 离开视频场景时彻底隐藏封面标题（防止锚点跳转后残留）
     if (coverText && sceneIndex !== 0) {
@@ -210,7 +237,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .setup({
         step: ".step",
         offset: 0.55, // 步骤顶边越过视口 55% 高度处触发，文字更早进入焦点
-        progress: true, // 开启步骤进度，驱动背景内容轻微视差
         order: true, // 保证滚动方向变化时仍按文档顺序触发
         debug: false,
       })
@@ -219,20 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const sceneIndex = Number(element.dataset.scene || index);
         activateScene(sceneIndex);
         markCurrentStep(index);
-      })
-      .onStepProgress(({ element, progress }) => {
-        if (prefersReducedMotion) return;
-
-        // 背景内容随步骤进度轻微漂移（±2.5%），切换之间画面始终在动
-        const sceneIndex = Number(element.dataset.scene || 0);
-        const scene = scenes[sceneIndex];
-        if (!scene || !scene.classList.contains("is-active")) return;
-
-        const media = scene.querySelector("img, video");
-        if (!media) return;
-
-        const drift = (0.5 - progress) * 5; // 进场时下沉，越过焦点时上升
-        media.style.transform = `translateY(${drift.toFixed(2)}%) scale(1.06)`;
       });
 
     // 移动端地址栏伸缩会改变视口高度，防抖后重新计算触发位置
