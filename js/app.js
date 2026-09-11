@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // 获取封面的实际高度
   let coverHeight = coverSection.offsetHeight;
+  let hasPlaybackFallback = false;
 
   const tryPlayVideo = () => {
     if (!coverVideo) return;
@@ -20,11 +21,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const playPromise = coverVideo.play();
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(() => {
+        if (hasPlaybackFallback) return;
+
         // 浏览器把自动播放视为“不允许”，等用户首次交互再恢复播放
-        document.addEventListener('pointerdown', () => {
+        hasPlaybackFallback = true;
+        const resumeVideo = () => {
           coverVideo.muted = true;
           coverVideo.play().catch(() => {});
-        }, { once: true });
+        };
+
+        document.addEventListener('pointerdown', resumeVideo, { once: true, passive: true });
+        document.addEventListener('touchstart', resumeVideo, { once: true, passive: true });
       });
     }
   };
@@ -77,8 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             tryPlayVideo();
-          } else {
-            coverVideo.pause();
           }
         });
       });
@@ -89,5 +94,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     coverVideo.addEventListener('loadeddata', tryPlayVideo);
+    coverVideo.addEventListener('canplay', tryPlayVideo);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) tryPlayVideo();
+    });
+
+    window.addEventListener('pageshow', tryPlayVideo);
   }
 });
