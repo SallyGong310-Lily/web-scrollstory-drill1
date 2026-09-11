@@ -23,7 +23,7 @@
     <main class="article-content">
       <!-- ============================================
          Scrollama 滚动叙事区
-         场景顺序：首屏视频 → 纸张 → 等高线图 → 冰塔林
+         场景顺序：首屏视频（延续到分栏页）→ 等高线图 → 冰塔林
          所有视觉元素（标题 / 文字 / 图片）越过焦点后
          统一「如雪花向上消散」
          ============================================ -->
@@ -55,17 +55,10 @@
             </video>
           </div>
 
-          <!-- 场景 1：纸张底色（肖像 × 文案左右分栏） -->
-          <div
-            class="bg-scene bg-scene--paper"
-            data-scene="1"
-            data-caption=""
-          ></div>
-
-          <!-- 场景 2：等高线拓扑图（延续到第二章文字背后） -->
+          <!-- 场景 1：等高线拓扑图（延续到第二章文字背后） -->
           <div
             class="bg-scene bg-scene--media"
-            data-scene="2"
+            data-scene="1"
             data-caption="寂静岭等高线拓扑图。红点标记为第七科考队最后发出信号的位置。"
           >
             <img
@@ -77,8 +70,8 @@
             />
           </div>
 
-          <!-- 场景 3：冰塔林背影（延续到尾声文字背后，不带图注） -->
-          <div class="bg-scene bg-scene--media" data-scene="3" data-caption="">
+          <!-- 场景 2：冰塔林背影（延续到尾声文字背后，不带图注） -->
+          <div class="bg-scene bg-scene--media" data-scene="2" data-caption="">
             <img
               src="assets/parallax-climber.avif"
               alt="雪坡上攀登者的背影"
@@ -118,8 +111,8 @@
             </article>
           </div>
 
-          <!-- 步骤 2：肖像在左 × 卫星文案在右（纸张场景） -->
-          <div class="step" data-scene="1">
+          <!-- 步骤 2：肖像在左 × 卫星文案在右（背景延续首屏视频） -->
+          <div class="step" data-scene="0">
             <div class="step__card step__card--split">
               <figure class="split-media">
                 <img
@@ -145,10 +138,10 @@
           </div>
 
           <!-- 步骤 3：等高线图全屏切场（无文字卡片） -->
-          <div class="step step--media" data-scene="2"></div>
+          <div class="step step--media" data-scene="1"></div>
 
           <!-- 步骤 4：第二章 · 风暴眼（文字压在等高线图上） -->
-          <div class="step" data-scene="2" id="chapter-2">
+          <div class="step" data-scene="1" id="chapter-2">
             <article class="step__card">
               <span class="step__kicker">第二章 · 风暴眼</span>
               <h2>风暴眼中的寂静</h2>
@@ -162,7 +155,7 @@
           </div>
 
           <!-- 步骤 5：引言（压在等高线图上） -->
-          <div class="step" data-scene="2">
+          <div class="step" data-scene="1">
             <blockquote class="step__card step__card--quote">
               <p>
                 “那一刻，我感觉不是我们在攀登雪山，而是雪山在缓慢地咀嚼我们。”
@@ -171,7 +164,7 @@
           </div>
 
           <!-- 步骤 6：火柴（压在等高线图上） -->
-          <div class="step" data-scene="2">
+          <div class="step" data-scene="1">
             <article class="step__card">
               <p>
                 李维知道，他们不能再等下去了。留在帐篷里是慢性死亡，冲出去也许还有一线生机。他点燃了最后一根防风火柴，微弱的橘色火光在五个队员绝望的瞳孔里跳跃。
@@ -180,10 +173,10 @@
           </div>
 
           <!-- 步骤 7：冰塔林全屏切场（纯视觉，无图注） -->
-          <div class="step step--media" data-scene="3"></div>
+          <div class="step step--media" data-scene="2"></div>
 
           <!-- 步骤 8：尾声（文字压在冰塔林上） -->
-          <div class="step" data-scene="3">
+          <div class="step" data-scene="2">
             <article class="step__card">
               <p>
                 此后的十二小时，成为了现代登山史上的一个谜。搜救队在三天后抵达 4

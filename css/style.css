@@ -126,7 +126,7 @@ body {
 /* ================================
    3. Scrollama 滚动叙事区
       sticky 背景固定 + 前景步骤卡片
-      场景顺序：首屏视频 → 纸张 → 等高线图 → 冰塔林
+      场景顺序：首屏视频（延续到分栏页）→ 等高线图 → 冰塔林
    ================================ */
 .article-content {
   position: relative;
@@ -173,11 +173,6 @@ body {
   transition:
     opacity 0.6s cubic-bezier(0.33, 0, 0.2, 1),
     transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* 纸张场景：对应原文白底阅读区 */
-.bg-scene--paper {
-  background: linear-gradient(to bottom, #fcfcfc 0%, #f3f4f6 100%);
 }
 
 .bg-scene img,
@@ -400,6 +395,11 @@ body {
 .scrolly.is-on-media .step__final {
   color: #fff;
   border-top-color: rgba(255, 255, 255, 0.28);
+}
+
+/* 分栏页压在视频上时，肖像图注也切为浅色 */
+.scrolly.is-on-media .split-media figcaption {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ================================
