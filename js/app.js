@@ -19,7 +19,210 @@
 // （无 JS 时所有文字保持静态、完整可读）
 document.documentElement.classList.add("js-enabled");
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  const fallbackConfig = window.STORY_CONFIG || {};
+  const queryConfig = new URLSearchParams(window.location.search).get("config");
+  const appScript = document.querySelector('script[src*="js/app.js"]');
+  const configSrc =
+    queryConfig ||
+    document.body.dataset.configSrc ||
+    appScript?.dataset.configSrc ||
+    "";
+  const normalizeConfig = (payload) => {
+    if (!payload || typeof payload !== "object") return null;
+    // Accept plain JSON as well as common headless CMS envelopes.
+    return payload.config || payload.story || payload.data?.attributes || payload.data || payload;
+  };
+  let config = normalizeConfig(fallbackConfig) || {};
+  if (configSrc) {
+    try {
+      const response = await fetch(configSrc, { credentials: "same-origin" });
+      if (!response.ok) throw new Error(`Config request failed: ${response.status}`);
+      const remoteConfig = normalizeConfig(await response.json());
+      if (!remoteConfig || !Array.isArray(remoteConfig.steps)) {
+        throw new Error("Config response does not contain a steps array");
+      }
+      config = { ...config, ...remoteConfig };
+    } catch (error) {
+      console.warn("Unable to load external story config; using story-config.js.", error);
+    }
+  }
+  if (!Array.isArray(config.steps)) {
+    console.warn("No valid story configuration found.");
+    return;
+  }
+
+  const escapeHtml = (value = "") =>
+    String(value).replace(
+      /[&<>"']/g,
+      (character) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+          character
+        ],
+    );
+  const paragraphs = (items = []) =>
+    items.map((text) => `<p>${escapeHtml(text)}</p>`).join("");
+
+  // The HTML is intentionally only a mount point. Story-specific content lives in story-config.js.
+  const theme = config.theme || {};
+  const rootStyle = document.documentElement.style;
+  const themeVars = {
+    "--story-accent": theme.accent,
+    "--story-text": theme.text,
+    "--story-bg": theme.background,
+    "--story-font": theme.font,
+    "--story-ui-font": theme.uiFont,
+    "--story-overlay": theme.overlayStrength,
+  };
+  Object.entries(themeVars).forEach(([name, value]) => {
+    if (value !== undefined && value !== null && value !== "") rootStyle.setProperty(name, value);
+  });
+  document.title = config.title || document.title;
+  document.getElementById("coverTitle").textContent = config.title || "";
+  document.querySelector('[data-story="subtitle"]').textContent =
+    config.subtitle || "";
+  document.querySelector('[data-story="byline"]').textContent =
+    config.byline || "";
+  document.querySelector('[data-story="nav-title"]').textContent =
+    config.navTitle || config.title || "";
+  const chapterList = document.querySelector('[data-story="chapters"]');
+  chapterList.innerHTML = (
+    config.chapters || []
+  )
+    .map(
+      ({ id, label }) =>
+        `<li><a href="#${escapeHtml(id)}">${escapeHtml(label)}</a></li>`,
+    )
+    .join("");
+
+  const mediaSources = (media, tag) => {
+    const mobile = typeof media.mobileSrc === "string" ? media.mobileSrc.trim() : "";
+    if (!mobile) return "";
+    const type = tag === "video" ? ' type="video/mp4"' : "";
+    const breakpoint = Number.isFinite(Number(media.mobileBreakpoint))
+      ? Number(media.mobileBreakpoint)
+      : 768;
+    return `<source media="(max-width: ${breakpoint}px)" src="${escapeHtml(mobile)}"${type} />`;
+  };
+  const mediaError = (element) => {
+    element.addEventListener("error", function onError() {
+      const parent = this.parentElement;
+      if (!parent || parent.querySelector(":scope > .media-placeholder")) return;
+      this.classList.add("media-error");
+      const fallback = document.createElement("span");
+      fallback.className = "media-placeholder is-visible";
+      fallback.setAttribute("role", "img");
+      fallback.setAttribute("aria-label", this.getAttribute("alt") || "媒体");
+      fallback.textContent = "媒体暂时无法加载";
+      this.replaceWith(fallback);
+    }, { once: true });
+  };
+  const renderMedia = (media = {}, { background = false } = {}) => {
+    const tag = media.type === "video" ? "video" : "img";
+    const dimensions = background ? 'width="1600" height="900"' : 'width="900" height="600"';
+    if (tag === "video") {
+      const poster = media.poster ? ` poster="${escapeHtml(media.poster)}"` : "";
+      return `<video muted loop playsinline preload="metadata" ${dimensions}${poster} aria-label="${escapeHtml(media.alt || "")}">${mediaSources(media, tag)}<source src="${escapeHtml(media.src || "")}" type="video/mp4" /><span class="media-placeholder">媒体暂时无法加载</span></video>`;
+    }
+    return `<picture>${mediaSources(media, tag)}<img src="${escapeHtml(media.src || "")}" alt="${escapeHtml(media.alt || "")}" ${dimensions} loading="lazy" /><span class="media-placeholder">媒体暂时无法加载</span></picture>`;
+  };
+  document.querySelector('[data-story="scenes"]').outerHTML = (config.scenes || [])
+    .map((scene) => {
+      const media =
+        renderMedia({ ...scene, type: scene.type }, { background: true });
+      return `<div class="bg-scene bg-scene--media${scene.snow ? " bg-scene--snow" : ""}" data-scene="${scene.id}" data-caption="${escapeHtml(scene.caption || "")}">${media}</div>`;
+    })
+    .join("");
+
+  let splitElementRendered = false;
+  const renderStep = (step) => {
+    const attributes = `class="step${step.type === "media" ? " step--media" : ""}" data-scene="${step.scene}"${step.id ? ` id="${escapeHtml(step.id)}"` : ""}`;
+    if (step.type === "media") return `<div ${attributes}></div>`;
+    if (step.type === "quote")
+      return `<div ${attributes}><blockquote class="step__card step__card--quote"><p>${escapeHtml(step.text)}</p></blockquote></div>`;
+    if (step.type === "gallery") {
+      const items = (step.images || []).map((image) => `<figure class="gallery__item">${renderMedia(image)}<figcaption>${escapeHtml(image.caption || "")}</figcaption></figure>`).join("");
+      return `<div ${attributes}><section class="step__card step__card--gallery" aria-label="${escapeHtml(step.title || "图片集")}">${step.title ? `<h2>${escapeHtml(step.title)}</h2>` : ""}<div class="gallery">${items}</div></section></div>`;
+    }
+    if (step.type === "timeline") {
+      const items = (step.events || []).map((event) => `<li class="timeline__event"><time>${escapeHtml(event.date || "")}</time><div><h3>${escapeHtml(event.title || "")}</h3><p>${escapeHtml(event.text || "")}</p></div></li>`).join("");
+      return `<div ${attributes}><section class="step__card step__card--timeline" aria-label="${escapeHtml(step.title || "时间线")}">${step.title ? `<h2>${escapeHtml(step.title)}</h2>` : ""}<ol class="timeline">${items}</ol></section></div>`;
+    }
+    if (step.type === "data") {
+      const rows = (step.rows || []).map((row) => `<tr>${(Array.isArray(row) ? row : Object.values(row)).map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("");
+      const headers = (step.headers || []).map((header) => `<th scope="col">${escapeHtml(header)}</th>`).join("");
+      return `<div ${attributes}><section class="step__card step__card--data" aria-label="${escapeHtml(step.title || "数据")}">${step.title ? `<h2>${escapeHtml(step.title)}</h2>` : ""}<div class="data-table-wrap"><table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div></section></div>`;
+    }
+    if (step.type === "split") {
+      const media = step.media || {};
+      const dissolveIds = splitElementRendered
+        ? { image: "", caption: "", text: "" }
+        : {
+            image: ' id="portraitImg"',
+            caption: ' id="portraitCaption"',
+            text: ' id="splitText"',
+          };
+      splitElementRendered = true;
+      return `<div ${attributes}><div class="step__card step__card--split"><figure class="split-media"${dissolveIds.image}>${renderMedia(media)}<figcaption${dissolveIds.caption}>${escapeHtml(media.caption)}</figcaption></figure><div class="split-text"${dissolveIds.text}>${paragraphs(step.paragraphs)}</div></div></div>`;
+    }
+    const title = step.title ? `<h2>${escapeHtml(step.title)}</h2>` : "";
+    const kicker = step.kicker
+      ? `<span class="step__kicker">${escapeHtml(step.kicker)}</span>`
+      : "";
+    const dropCap = step.dropCap
+      ? `<p class="drop-cap">${escapeHtml(step.dropCap)}</p>`
+      : "";
+    const final = step.final
+      ? `<p class="step__final">${escapeHtml(step.final)}</p>`
+      : "";
+    return `<div ${attributes}><article class="step__card">${kicker}${title}${dropCap}${paragraphs(step.paragraphs)}${final}</article></div>`;
+  };
+  document.querySelector('[data-story="steps"]').innerHTML = (config.steps || [])
+    .map(renderStep)
+    .join("");
+  document
+    .querySelector('[data-story="steps"]')
+    .insertAdjacentHTML(
+      "beforeend",
+      '<div class="scrolly__tail" aria-hidden="true"></div>',
+    );
+  document.querySelectorAll("img, video").forEach(mediaError);
+  document.querySelectorAll("video").forEach((video) => {
+    video.preload = video.closest("[data-scene]")?.dataset.scene === String(config.coverScene ?? config.scenes?.[0]?.id) ? "auto" : "metadata";
+  });
+  const progressBar = document.querySelector('[data-story="progress-bar"]');
+  const progressLabel = document.querySelector('[data-story="progress-label"]');
+  const progressTrack = document.querySelector('[data-story="progress-steps"]');
+  const progressContainer = document.querySelector('[data-story="progress"]');
+  const chapterData = Array.isArray(config.chapters) ? config.chapters : [];
+  if (progressTrack) {
+    progressTrack.innerHTML = chapterData
+      .map((chapter) => `<span class="chapter-progress__step" title="${escapeHtml(chapter.label || "")}"></span>`)
+      .join("");
+  }
+  const setProgress = (index) => {
+    const total = steps.length || 1;
+    const percent = ((index + 1) / total) * 100;
+    if (progressBar) {
+      if (progressBar.tagName === "PROGRESS") progressBar.value = percent;
+      else progressBar.style.width = `${percent}%`;
+      progressBar.setAttribute("aria-valuenow", String(Math.round(percent)));
+    }
+    const chapterIndex = chapterData.reduce(
+      (current, chapter, i) => (steps.findIndex((step) => step.id === chapter.id) <= index ? i : current),
+      0,
+    );
+    if (progressLabel) {
+      progressLabel.textContent = chapterData.length
+        ? `${Math.min(chapterIndex + 1, chapterData.length)} / ${chapterData.length}`
+        : `${index + 1} / ${total}`;
+    }
+    progressTrack?.querySelectorAll(".chapter-progress__step").forEach((step, i) => {
+      step.classList.toggle("is-active", i <= chapterIndex);
+    });
+    progressContainer?.setAttribute("aria-label", `阅读进度 ${Math.round(percent)}%`);
+  };
+
   /* ==========================================================
      1. 首屏：封面标题雪花式消散 + 幽灵导航 + 视频自动播放兜底
      职责：唯一的滚动 rAF 总控循环在这里注册——封面消散、
@@ -29,8 +232,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const coverText = document.getElementById("coverText");
   const coverTitle = document.getElementById("coverTitle");
   const ghostNav = document.getElementById("ghostNav");
-  const coverScene = document.querySelector('.bg-scene[data-scene="0"]');
-  const coverVideo = document.querySelector(".scrolly__bg video");
+  const sceneElements = Array.from(document.querySelectorAll(".bg-scene"));
+  const sceneById = new Map(
+    sceneElements.map((scene) => [scene.dataset.scene, scene]),
+  );
+  const coverSceneId = String(config.coverScene ?? config.scenes?.[0]?.id ?? "");
+  const coverScene = sceneById.get(coverSceneId);
+  const coverVideo = coverScene?.querySelector("video");
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
@@ -252,13 +460,13 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================================
      2. Scrollama：sticky 背景 + 步骤卡片的滚动叙事
      ========================================================== */
-  const scenes = Array.from(document.querySelectorAll(".bg-scene"));
+  const scenes = sceneElements;
   const steps = Array.from(document.querySelectorAll(".step"));
   const bgCaption = document.getElementById("bgCaption");
 
   if (!scenes.length || !steps.length) return;
 
-  let activeScene = -1;
+  let activeScene = null;
   let captionTimer = null;
 
   /* ==========================================================
@@ -342,12 +550,13 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", resizeSnow, { passive: true });
 
   // 场景切换：交叉淡化 + 离场场景向上消散
-  const activateScene = (sceneIndex) => {
-    if (sceneIndex === activeScene) return;
-    activeScene = sceneIndex;
+  const activateScene = (sceneId) => {
+    const sceneKey = String(sceneId);
+    if (sceneKey === activeScene) return;
+    activeScene = sceneKey;
 
     scenes.forEach((scene, i) => {
-      const isActive = i === sceneIndex;
+      const isActive = scene.dataset.scene === sceneKey;
       scene.classList.toggle("is-active", isActive);
       // 新场景提到最上层：交叉切换时「新画面盖旧画面」，避免双半透明灰雾
       scene.style.zIndex = isActive ? "2" : "";
@@ -366,14 +575,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 文字是否直接压在媒体场景（视频/图片）上：切换白字投影样式
     if (scrollySection) {
-      const isMedia = scenes[sceneIndex]
-        ? scenes[sceneIndex].classList.contains("bg-scene--media")
-        : false;
+      const activeSceneEl = sceneById.get(sceneKey);
+      const isMedia = activeSceneEl?.classList.contains("bg-scene--media") ?? false;
       scrollySection.classList.toggle("is-on-media", isMedia);
     }
 
     // 记录当前场景的媒体元素，供连续视差使用
-    const activeSceneEl = scenes[sceneIndex];
+    const activeSceneEl = sceneById.get(sceneKey);
     activeMedia = activeSceneEl
       ? activeSceneEl.querySelector("img, video")
       : null;
@@ -393,16 +601,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 离开视频场景时彻底隐藏封面标题（防止锚点跳转后残留）
-    if (coverText && sceneIndex !== 0) {
+    if (coverText && sceneKey !== coverSceneId) {
       coverText.style.opacity = "0";
       if (!prefersReducedMotion) coverText.style.filter = "blur(10px)";
     }
 
     // 底部图注：淡出 → 换字 → 淡入
     if (!bgCaption) return;
-    const caption = scenes[sceneIndex]
-      ? scenes[sceneIndex].dataset.caption || ""
-      : "";
+    const caption = sceneById.get(sceneKey)?.dataset.caption || "";
 
     if (bgCaption.textContent === caption) {
       bgCaption.classList.toggle("is-hidden", caption === "");
@@ -419,25 +625,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 高亮当前步骤；已越过的步骤标记为 is-passed（雪花式向上消散）
   // 同时联动幽灵导航：高亮当前章节链接
-  const chapter2Index = steps.findIndex((s) => s.id === "chapter-2");
   const navChapterLinks = Array.from(
     document.querySelectorAll(".nav-chapters a"),
   );
+  const chapterStepIndexes = new Map(
+    (config.chapters || [])
+      .map((chapter) => [
+        chapter.id,
+        steps.findIndex((step) => step.id === chapter.id),
+      ])
+      .filter(([, index]) => index >= 0),
+  );
 
   const markCurrentStep = (index) => {
+    setProgress(index);
     steps.forEach((step, i) => {
       step.classList.toggle("is-current", i === index);
       step.classList.toggle("is-passed", i < index);
     });
 
-    const chapter = chapter2Index >= 0 && index >= chapter2Index ? 1 : 0;
+    let chapter = 0;
+    chapterStepIndexes.forEach((chapterIndex, chapterId) => {
+      if (index >= chapterIndex) {
+        chapter = (config.chapters || []).findIndex(
+          (item) => item.id === chapterId,
+        );
+      }
+    });
     navChapterLinks.forEach((link, i) => {
       link.classList.toggle("is-active", i === chapter);
     });
   };
 
   // 初始化第一个场景与图注
-  activateScene(0);
+  activateScene(coverSceneId);
+  markCurrentStep(0);
 
   // scrollama 初始化（本地 js/scrollama.min.js）
   if (typeof scrollama !== "undefined") {
@@ -454,8 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .onStepEnter(({ element, index }) => {
         // 步骤上标记的 data-scene 决定它对应哪张背景
-        const sceneIndex = Number(element.dataset.scene || index);
-        activateScene(sceneIndex);
+        activateScene(element.dataset.scene || coverSceneId);
         markCurrentStep(index);
       });
 

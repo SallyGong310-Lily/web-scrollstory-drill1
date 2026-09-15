@@ -2,245 +2,43 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
-    <title>寂静岭的十二小时 - 深度特稿</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>内容驱动滚动叙事</title>
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <!--
-      ═══════════════════════════════════════════════════════
-      架构总览：滚动叙事 = sticky 背景层 + 前景步骤流
-      · 分工职责：
-          HTML —— 只声明结构与契约（data-scene 绑定、id 供 JS 引用）
-          CSS  —— 状态类（三态 / 激活）、过渡曲线、响应式、无障碍
-          JS   —— 连续运动（消散 / 视差 / 镜头呼吸 / 飘雪）与步骤触发
-      · 场景顺序：0 首屏视频（延续到分栏页）→ 1 等高线图 → 2 冰塔林
-      · 关键教训：连续运动必须由连续的滚动值驱动，离散的步骤事件会
-        产生跳变；接缝类问题（场景交叉、视频循环）一律在源头解决
-      ═══════════════════════════════════════════════════════
-    -->
-
-    <!-- 顶部幽灵导航（初始隐藏，滑过封面后显示）
-         复盘：初版是不透明白条，与暗色电影感脱节；改为暗色磨砂玻璃，
-         与底部图注条、场景压暗渐变统一成一种「玻璃语言」 -->
-    <nav class="ghost-nav" id="ghostNav">
-      <div class="nav-title">雪崩：寂静岭的十二小时</div>
-      <ul class="nav-chapters">
-        <li><a href="#chapter-1">1. 进山</a></li>
-        <li><a href="#chapter-2">2. 风暴眼</a></li>
-      </ul>
+    <nav class="ghost-nav" id="ghostNav" data-template="navigation" aria-label="章节导航">
+      <div class="nav-title" data-story="nav-title"></div>
+      <ul class="nav-chapters" data-story="chapters"></ul>
+      <div class="chapter-progress" data-story="progress" role="group" aria-label="阅读进度">
+        <span class="chapter-progress__steps" data-story="progress-steps"></span>
+        <progress class="chapter-progress__bar" max="100" value="0" data-story="progress-bar"></progress>
+        <span data-story="progress-label"></span>
+      </div>
     </nav>
 
-    <!-- 正文区域（含首屏封面，封面视频即第一个 sticky 场景） -->
     <main class="article-content">
-      <!-- ============================================
-         Scrollama 滚动叙事区
-         场景顺序：首屏视频（延续到分栏页）→ 等高线图 → 冰塔林
-         所有视觉元素（标题 / 文字 / 图片）越过焦点后
-         统一「如雪花向上消散」
-         ============================================ -->
       <section class="scrolly" id="scrolly" aria-label="滚动叙事章节">
-        <!-- 背景层：sticky 钉在视口顶部，随步骤切换场景 -->
         <figure class="scrolly__bg" id="scrollyBg">
-          <!-- 场景 0：首屏视频（H.264 MP4，全平台兼容）
-               复盘：视频为正反播（ping-pong）循环——正放推近、倒放拉回，
-               首尾同一帧、循环点数学无缝；镜头呼吸由 JS 按 currentTime
-               驱动，不烧进文件（ffmpeg zoompan 整数取整会颤抖） -->
-          <div
-            class="bg-scene bg-scene--media is-active"
-            data-scene="0"
-            data-caption=""
-          >
-            <video
-              autoplay
-              muted
-              loop
-              playsinline
-              preload="auto"
-              width="1280"
-              height="720"
-              poster="assets/cover-poster.jpg"
-              aria-hidden="true"
-            >
-              <source src="assets/hero-background-loop.mp4" type="video/mp4" />
-            </video>
-          </div>
-
-          <!-- 场景 1：等高线拓扑图（延续到第二章文字背后）
-               复盘：交叉淡化时 JS 会把新场景提到最上层、旧场景延迟淡出——
-               若新旧两层同时半透明，中途会叠出「灰雾」 -->
-          <div
-            class="bg-scene bg-scene--media"
-            data-scene="1"
-            data-caption="寂静岭等高线拓扑图。红点标记为第七科考队最后发出信号的位置。"
-          >
-            <img
-              src="assets/parallax-map.avif"
-              alt="寂静岭等高线拓扑图"
-              width="1600"
-              height="900"
-              fetchpriority="low"
-            />
-          </div>
-
-          <!-- 场景 2：冰塔林背影（延续到尾声文字背后，不带图注；激活时飘雪） -->
-          <div
-            class="bg-scene bg-scene--media bg-scene--snow"
-            data-scene="2"
-            data-caption=""
-          >
-            <img
-              src="assets/parallax-climber.avif"
-              alt="雪坡上攀登者的背影"
-              width="1600"
-              height="900"
-              fetchpriority="low"
-            />
-          </div>
-
-          <!-- 雪花粒子层：仅带 bg-scene--snow 的场景激活时飘雪
-               分层：背景图（下）→ 雪花 canvas（中）→ 前景文字卡片（上）；
-               独立 rAF 循环，场景不激活时完全停转、零开销 -->
-          <canvas
-            class="snow-canvas"
-            id="snowCanvas"
-            aria-hidden="true"
-          ></canvas>
-
-          <!-- 封面标题：随滚动如雪花般消散（JS 驱动；pointer-events 不拦截滑动） -->
+          <div data-story="scenes"></div>
+          <canvas class="snow-canvas" id="snowCanvas" aria-hidden="true"></canvas>
           <div class="cover-text" id="coverText">
-            <h1 id="coverTitle">雪崩</h1>
-            <p class="subtitle">寂静岭的十二小时，以及那些未能下山的人。</p>
-            <div class="byline">撰文 / Sally</div>
+            <h1 id="coverTitle">故事标题</h1>
+            <p class="subtitle" data-story="subtitle"></p>
+            <div class="byline" data-story="byline"></div>
           </div>
-
-          <!-- 底部图注，由 JS 随场景切换 -->
-          <figcaption
-            class="bg-scene__caption is-hidden"
-            id="bgCaption"
-          ></figcaption>
+          <figcaption class="bg-scene__caption is-hidden" id="bgCaption"></figcaption>
         </figure>
-
-        <!-- 前景步骤：data-scene 决定该步骤触发哪张背景
-             契约：data-scene 值必须与背景场景的 data-scene 一致；
-             空步骤（step--media）用于整屏切场，不承载文字 -->
-        <div class="scrolly__steps">
-          <!-- 步骤 1：第一章 · 进山（文字从下方升起，压在首屏视频上） -->
-          <div class="step" data-scene="0" id="chapter-1">
-            <article class="step__card">
-              <span class="step__kicker">第一章 · 进山</span>
-              <p class="drop-cap">气</p>
-              <p>
-                象台发出暴雪红色预警时，第七科考队已经越过了寂静岭的雪线。在这个海拔，空气稀薄得像被抽干了水分的海绵，每一次呼吸都带着血腥味。
-              </p>
-              <p>
-                队长李维拉紧了冲锋衣的领口。他曾在世界各地的极寒地带执行过任务，但寂静岭的风不同。这里的风不呼啸，而是发出一种低沉的、类似重型机械运转的嗡鸣。下午两点，天色已经暗得像黄昏。
-              </p>
-            </article>
-          </div>
-
-          <!-- 步骤 2：肖像在左 × 卫星文案在右（背景延续首屏视频）
-               契约：#portraitImg / #portraitCaption / #splitText 与 JS
-               消散器一一对应；三者各自以「自身中心过焦点线」为触发点，
-               先后错落消散 -->
-          <div class="step" data-scene="0">
-            <div class="step__card step__card--split">
-              <figure class="split-media">
-                <img
-                  src="assets/inline-portrait.jpg"
-                  alt="队长李维的档案肖像"
-                  width="810"
-                  height="1080"
-                  loading="lazy"
-                  fetchpriority="low"
-                  id="portraitImg"
-                />
-                <figcaption id="portraitCaption">
-                  队长李维在出发前的留影。他曾说：“雪山从不杀人，是傲慢在杀人。”
-                </figcaption>
-              </figure>
-              <div class="split-text" id="splitText">
-                <p>
-                  根据卫星回传的数据，冷锋将在三小时后彻底吞噬他们所在的 4
-                  号营地。撤退路线只有一条，那就是穿过被称为“鬼见愁”的狭窄冰塔林。但温度下降的速度超出了所有气象模型的预测，电子设备开始接连失效，GPS
-                  屏幕上的光斑闪烁了两下，彻底熄灭。
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 步骤 3：等高线图全屏切场（无文字卡片） -->
-          <div class="step step--media" data-scene="1"></div>
-
-          <!-- 步骤 4：第二章 · 风暴眼（文字压在等高线图上） -->
-          <div class="step" data-scene="1" id="chapter-2">
-            <article class="step__card">
-              <span class="step__kicker">第二章 · 风暴眼</span>
-              <h2>风暴眼中的寂静</h2>
-              <p>
-                晚八点，风暴达到了顶峰。如果此时有人能从万米高空俯瞰，会看到整个寂静岭被一个巨大的白色旋涡包裹。但在风暴的最中心，反而出现了一种诡异的平静。
-              </p>
-              <p>
-                雪花不再是横向飞舞，而是像铅块一样垂直砸下。营地帐篷的支撑杆在积雪的重压下发出痛苦的呻吟。无线电里只剩下沙沙的静电噪音，像是有无数人在用气声低语。
-              </p>
-            </article>
-          </div>
-
-          <!-- 步骤 5：引言（压在等高线图上） -->
-          <div class="step" data-scene="1">
-            <blockquote class="step__card step__card--quote">
-              <p>
-                “那一刻，我感觉不是我们在攀登雪山，而是雪山在缓慢地咀嚼我们。”
-              </p>
-            </blockquote>
-          </div>
-
-          <!-- 步骤 6：火柴（压在等高线图上） -->
-          <div class="step" data-scene="1">
-            <article class="step__card">
-              <p>
-                李维知道，他们不能再等下去了。留在帐篷里是慢性死亡，冲出去也许还有一线生机。他点燃了最后一根防风火柴，微弱的橘色火光在五个队员绝望的瞳孔里跳跃。
-              </p>
-            </article>
-          </div>
-
-          <!-- 步骤 7：冰塔林全屏切场（纯视觉，无图注） -->
-          <div class="step step--media" data-scene="2"></div>
-
-          <!-- 步骤 8：尾声（文字压在冰塔林上） -->
-          <div class="step" data-scene="2">
-            <article class="step__card">
-              <p>
-                此后的十二小时，成为了现代登山史上的一个谜。搜救队在三天后抵达 4
-                号营地时，只找到了半埋在雪中的空帐篷，以及一本被冻成冰块的航海日志。
-              </p>
-              <p class="step__final">
-                最后一页上，只有潦草的一句话：“雪太白了，白得让人想睡去。”
-              </p>
-            </article>
-          </div>
-
-          <!-- 尾部滚动余量：让尾声文字继续上移至画面中央，背景保持 sticky
-               复盘：没有这段余量时，滚动条的最后行程被「图片随区块滚走」
-               吃掉，文字永远到不了画面中央 -->
-          <div class="scrolly__tail" aria-hidden="true"></div>
-        </div>
-        <!-- /.scrolly__steps -->
+        <div class="scrolly__steps" data-story="steps"></div>
       </section>
-      <!-- /.scrolly -->
     </main>
 
     <footer class="site-footer">
-      <p>
-        版权所有 © 虚拟新闻周刊。排版致敬 The New York Times 《Snow Fall》。
-      </p>
+      <p>版权所有 © 虚拟新闻周刊。排版致敬 The New York Times 《Snow Fall》。</p>
     </footer>
 
-    <!-- 本地依赖：scrollama 必须先于 app.js 加载；defer 避免阻塞渲染 -->
+    <script src="js/story-config.js" defer></script>
     <script src="js/scrollama.min.js" defer></script>
-    <script src="js/app.js" defer></script>
+    <script src="js/app.js" data-config-src="" defer></script>
   </body>
 </html>

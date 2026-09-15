@@ -9,16 +9,24 @@
   box-sizing: border-box;
 }
 
+:root {
+  --story-accent: #8a2f2f;
+  --story-text: #222;
+  --story-bg: #0b0f16;
+  --story-font: Georgia, "Times New Roman", "Songti SC", serif;
+  --story-ui-font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --story-overlay: 0.55;
+}
+
 html {
   scroll-behavior: smooth; /* 锚点平滑滚动 */
 }
 
 /* 核心字体设定：致敬纽约时报的优雅衬线体搭配无衬线界面字体 */
 body {
-  font-family:
-    "Georgia", "Times New Roman", "Songti SC", "Noto Serif CJK SC", serif;
-  color: #333;
-  background-color: #0b0f16; /* 封面与页脚的过卷底色 */
+  font-family: var(--story-font);
+  color: var(--story-text);
+  background-color: var(--story-bg); /* 封面与页脚的过卷底色 */
   line-height: 1.8;
   -webkit-font-smoothing: antialiased;
 }
@@ -94,8 +102,36 @@ body {
 /* 当前章节：亮白 + 暗红下划线，呼应正文 kicker */
 .nav-chapters a.is-active {
   color: #fff;
-  border-bottom-color: #d96a5f;
+  border-bottom-color: var(--story-accent);
 }
+
+.chapter-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 90px;
+  color: rgba(255, 255, 255, 0.7);
+  font: 0.7rem var(--story-ui-font);
+}
+.chapter-progress__steps { display: inline-flex; gap: 3px; }
+.chapter-progress__step {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+.chapter-progress__step.is-active { background: var(--story-accent); }
+.chapter-progress__bar {
+  width: 48px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+.chapter-progress__bar::-webkit-progress-bar { background: rgba(255,255,255,.25); border-radius: 2px; }
+.chapter-progress__bar::-webkit-progress-value { background: var(--story-accent); border-radius: 2px; }
+.chapter-progress__bar::-moz-progress-bar { background: var(--story-accent); border-radius: 2px; }
 
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .ghost-nav {
@@ -155,12 +191,12 @@ body {
 .article-content {
   position: relative;
   z-index: 2;
-  background-color: #0b0f16; /* 与页脚同色，收尾无接缝 */
+  background-color: var(--story-bg); /* 与页脚同色，收尾无接缝 */
 }
 
 .scrolly {
   position: relative;
-  background-color: #0b0f16;
+  background-color: var(--story-bg);
 }
 
 /* 背景层：sticky 钉在视口顶部，占满整个视口 */
@@ -173,7 +209,7 @@ body {
   margin: 0;
   overflow: hidden;
   z-index: 1;
-  background-color: #0b0f16;
+  background-color: var(--story-bg);
 }
 
 /* 单个背景场景：默认透明，激活时交叉淡化进入
@@ -215,6 +251,23 @@ body {
   will-change: transform;
 }
 
+.bg-scene picture { display: block; width: 100%; height: 100%; }
+.bg-scene picture img { width: 100%; height: 100%; object-fit: cover; }
+.media-placeholder {
+  display: none;
+  place-items: center;
+  min-height: 160px;
+  padding: 2rem;
+  color: #fff;
+  background: #29313d;
+  font-family: var(--story-ui-font);
+  text-align: center;
+}
+.media-placeholder.is-visible { display: grid; }
+.bg-scene picture > .media-placeholder { position: absolute; inset: 0; }
+.gallery__item .media-placeholder { width: 100%; }
+.bg-scene > .media-placeholder { position: absolute; inset: 0; }
+
 /* 媒体场景（视频/图片）的压暗渐变：保证白字清晰可读 */
 .bg-scene--media::after {
   content: "";
@@ -223,9 +276,9 @@ body {
   z-index: 1;
   background: linear-gradient(
     to bottom,
-    rgba(8, 12, 18, 0.18) 0%,
-    rgba(8, 12, 18, 0.36) 50%,
-    rgba(8, 12, 18, 0.66) 100%
+    rgba(8, 12, 18, calc(var(--story-overlay) * 0.35)) 0%,
+    rgba(8, 12, 18, calc(var(--story-overlay) * 0.65)) 50%,
+    rgba(8, 12, 18, var(--story-overlay)) 100%
   );
 }
 
@@ -343,7 +396,7 @@ body {
 
 .step__card p {
   font-size: 1.12rem; /* 大号正文字体 */
-  color: #222;
+  color: var(--story-text);
   text-align: justify;
   margin-bottom: 1.2rem;
 }
@@ -358,16 +411,62 @@ body {
   font-size: 0.75rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #8a2f2f; /* 雪地里的暗红 */
+  color: var(--story-accent); /* 雪地里的暗红 */
   margin-bottom: 0.9rem;
 }
 
 .step__card h2 {
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   font-size: 1.9rem;
-  color: #111;
+  color: var(--story-text);
   margin-bottom: 1.1rem;
 }
+
+/* Productized content steps */
+.step__card--gallery,
+.step__card--timeline,
+.step__card--data { max-width: 1060px; }
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+.gallery__item { margin: 0; }
+.gallery__item picture,
+.gallery__item img { display: block; width: 100%; }
+.gallery__item img { aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; }
+.gallery__item figcaption {
+  margin-top: 0.45rem;
+  color: color-mix(in srgb, var(--story-text) 65%, transparent);
+  font: 0.78rem/1.45 var(--story-ui-font);
+}
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  border-left: 2px solid color-mix(in srgb, var(--story-accent) 55%, transparent);
+}
+.timeline__event { position: relative; display: grid; grid-template-columns: 7rem 1fr; gap: 1rem; padding: 0 0 1.5rem 1.25rem; }
+.timeline__event::before {
+  content: "";
+  position: absolute;
+  left: -0.43rem;
+  top: 0.5rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--story-accent);
+}
+.timeline__event time,
+.timeline__event h3 { font-family: var(--story-ui-font); }
+.timeline__event time { color: var(--story-accent); font-size: 0.8rem; }
+.timeline__event h3 { margin-bottom: 0.25rem; font-size: 1rem; }
+.timeline__event p { margin: 0; font-size: 0.95rem; }
+.data-table-wrap { overflow-x: auto; }
+.step__card--data table { width: 100%; border-collapse: collapse; font: 0.9rem/1.5 var(--story-ui-font); }
+.step__card--data th,
+.step__card--data td { padding: 0.7rem 0.8rem; text-align: left; border-bottom: 1px solid color-mix(in srgb, var(--story-text) 18%, transparent); }
+.step__card--data th { color: var(--story-accent); font-weight: 700; }
 
 /* 首字下沉效果 */
 .drop-cap {
@@ -395,6 +494,8 @@ body {
   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.25);
   will-change: opacity, transform, filter; /* JS 逐帧驱动消散 */
 }
+
+.split-media picture { display: block; }
 
 .split-media figcaption {
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -440,6 +541,23 @@ body {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   padding-top: 1.4rem;
 }
+
+.step__card--gallery, .step__card--timeline, .step__card--data { max-width: 1000px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; }
+.gallery__item { margin: 0; }
+.gallery__item img, .gallery__item video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; }
+.gallery__item figcaption { margin-top: .5rem; color: #555; font: .82rem/1.5 var(--story-ui-font); }
+.timeline { list-style: none; border-left: 1px solid color-mix(in srgb, var(--story-accent) 55%, transparent); padding-left: 1.5rem; }
+.timeline__event { position: relative; display: grid; grid-template-columns: 7rem 1fr; gap: 1rem; padding: 0 0 1.5rem; }
+.timeline__event::before { content: ""; position: absolute; width: .65rem; height: .65rem; left: -1.88rem; top: .45rem; border-radius: 50%; background: var(--story-accent); }
+.timeline__event time, .timeline__event h3 { font-family: var(--story-ui-font); }
+.timeline__event time { color: var(--story-accent); font-weight: 700; }
+.timeline__event h3 { margin-bottom: .25rem; font-size: 1rem; }
+.timeline__event p { margin: 0; font-size: 1rem; }
+.data-table-wrap { overflow-x: auto; }
+.step__card--data table { width: 100%; border-collapse: collapse; font: .9rem/1.5 var(--story-ui-font); }
+.step__card--data th, .step__card--data td { padding: .65rem; border-bottom: 1px solid rgba(0,0,0,.15); text-align: left; }
+.step__card--data th { color: var(--story-accent); }
 
 /* 文字直接落在媒体场景上时：白字 + 投影（JS 按场景切换 .is-on-media） */
 .scrolly.is-on-media .step__card p,
@@ -550,6 +668,11 @@ body {
     font-size: 0.75rem;
     text-align: left;
   }
+  .ghost-nav { padding-left: 1rem; padding-right: 1rem; }
+  .nav-chapters { gap: .25rem; overflow-x: auto; }
+  .nav-chapters a { font-size: .72rem; }
+  .chapter-progress { min-width: 65px; }
+  .timeline__event { grid-template-columns: 1fr; gap: .15rem; }
 }
 
 /* 横屏手机：压缩卡片内边距，避免一屏放不下 */
@@ -569,6 +692,10 @@ body {
     max-width: 900px;
     gap: 2.5rem;
   }
+
+  .chapter-progress { min-width: 70px; }
+  .chapter-progress__bar { display: none; }
+  .timeline__event { grid-template-columns: 1fr; gap: 0.2rem; }
 }
 
 /* 尊重系统「减弱动态效果」设置 */
